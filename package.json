@@ -1,0 +1,92 @@
+{
+  "name": "chatanyllm",
+  "version": "1.0.0",
+  "description": "Chat with multiple LLM providers",
+  "main": "electron/main.cjs",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "electron:dev": "electron .",
+    "start": "concurrently \"npm run dev\" \"npm run electron:dev\"",
+    "electron:wait": "wait-on http://localhost:3000 -t 30000 && electron .",
+    "electron:build": "npm run build && electron-builder --windows",
+    "electron:build:dir": "npm run build && electron-builder --dir"
+  },
+  "keywords": [
+    "chat",
+    "llm",
+    "ai",
+    "openai",
+    "claude",
+    "gemini"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@radix-ui/react-avatar": "^1.1.10",
+    "@radix-ui/react-dialog": "^1.1.15",
+    "@radix-ui/react-dropdown-menu": "^2.1.16",
+    "@radix-ui/react-hover-card": "^1.1.15",
+    "@radix-ui/react-label": "^2.1.7",
+    "@radix-ui/react-popover": "^1.1.15",
+    "@radix-ui/react-progress": "^1.1.7",
+    "@radix-ui/react-scroll-area": "^1.2.10",
+    "@radix-ui/react-separator": "^1.1.7",
+    "@radix-ui/react-slot": "^1.2.3",
+    "@radix-ui/react-tabs": "^1.1.13",
+    "@radix-ui/react-tooltip": "^1.2.8",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "cmdk": "^1.1.1",
+    "eletron": "^0.0.1-security",
+    "lucide-react": "^0.546.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-markdown": "^10.1.0",
+    "rehype-katex": "^7.0.1",
+    "rehype-raw": "^7.0.0",
+    "rehype-sanitize": "^6.0.0",
+    "remark-gfm": "^4.0.1",
+    "remark-math": "^6.0.0",
+    "tailwind-merge": "^3.3.1",
+    "tailwindcss-animate": "^1.0.7",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.16",
+    "concurrently": "^9.2.1",
+    "electron": "^28.3.3",
+    "electron-builder": "^24.9.1",
+    "postcss": "^8.4.32",
+    "shadcn": "^3.4.2",
+    "tailwindcss": "^3.4.0",
+    "vite": "^5.0.8",
+    "wait-on": "^9.0.1"
+  },
+  "build": {
+    "appId": "com.chatanyllm.app",
+    "productName": "ChatAnyLLM",
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "output": "dist-electron",
+      "buildResources": "public"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "public/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  }
+}
