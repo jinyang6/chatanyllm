@@ -90,7 +90,20 @@
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "createStartMenuShortcut": true
+      "createStartMenuShortcut": true,
+      "runAfterFinish": true,
+      "installerIcon": "public/icon.ico",
+      "uninstallerIcon": "public/icon.ico",
+      "license": null,
+      "perMachine": false,
+      "allowElevation": true,
+      "installerHeader": null,
+      "installerSidebar": null,
+      "uninstallerSidebar": null,
+      "menuCategory": false,
+      "displayLanguageSelector": false,
+      "warningsAsErrors": false,
+      "include": "build/installer.nsh"
     }
   }
 }

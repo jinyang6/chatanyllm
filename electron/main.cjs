@@ -32,7 +32,8 @@ try {
   process.exit(1)
 }
 
-const isDev = process.env.NODE_ENV !== 'production'
+// More reliable dev detection - check if running from source or packaged
+const isDev = !app.isPackaged
 
 let mainWindow = null
 
@@ -53,7 +54,9 @@ function createWindow() {
       webSecurity: false  // Disable CORS for custom API providers
     },
     autoHideMenuBar: true,
-    icon: path.join(__dirname, '../public/icon.ico')
+    icon: isDev
+      ? path.join(__dirname, '../public/icon.ico')
+      : path.join(__dirname, '../dist/icon.ico')
   })
 
   // Load app

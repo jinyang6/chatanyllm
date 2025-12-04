@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Minus as MinimizeIcon, Square as MaximizeIcon, X as CloseIcon, Copy as RestoreIcon } from 'lucide-react'
+import iconSvg from '/icon.svg'
 
 function TitleBar() {
   const [isMaximized, setIsMaximized] = useState(false)
@@ -41,7 +42,7 @@ function TitleBar() {
     <div className="h-8 bg-background flex items-center justify-between select-none titlebar-drag">
       {/* App Icon */}
       <div className="flex items-center h-full pl-2 titlebar-no-drag">
-        <img src="/icon.svg" alt="ChatAnyLLM" className="h-5 w-5" />
+        <img src={iconSvg} alt="ChatAnyLLM" className="h-5 w-5" />
       </div>
 
       {/* Window controls */}

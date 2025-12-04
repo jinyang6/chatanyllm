@@ -85,6 +85,7 @@ export function AlertDialog({
           {secondaryAction && (
             <Button
               variant="outline"
+              className="whitespace-normal"
               onClick={() => {
                 if (secondaryAction.handler) {
                   secondaryAction.handler()
@@ -98,6 +99,7 @@ export function AlertDialog({
           {primaryAction && (
             <Button
               variant={type === 'error' ? 'destructive' : 'default'}
+              className="whitespace-normal"
               onClick={() => {
                 if (primaryAction.handler) {
                   primaryAction.handler()
