@@ -42,6 +42,9 @@ function createWindow() {
     height: 800,
     minWidth: 900,
     minHeight: 600,
+    frame: false,  // Remove default title bar
+    titleBarStyle: 'hidden',  // Hide title bar on macOS
+    backgroundColor: '#F9F9F9',  // Match app background
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
@@ -50,12 +53,12 @@ function createWindow() {
       webSecurity: false  // Disable CORS for custom API providers
     },
     autoHideMenuBar: true,
-    icon: path.join(__dirname, '../public/icon.png')
+    icon: path.join(__dirname, '../public/icon.ico')
   })
 
   // Load app
   if (isDev) {
-    mainWindow.loadURL('http://localhost:3000')
+    mainWindow.loadURL('http://localhost:3005')
     mainWindow.webContents.openDevTools()
   } else {
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'))
@@ -184,6 +187,32 @@ ipcMain.handle('fs:mkdir', async (event, dirPath) => {
   try {
     await fs.mkdir(dirPath, { recursive: true })
     return { success: true }
+  } catch (error) {
+    return { success: false, error: error.message }
+  }
+})
+
+// Write binary file (for images, etc.)
+ipcMain.handle('fs:writeBinaryFile', async (event, filePath, base64Data) => {
+  try {
+    // Ensure directory exists
+    const dir = path.dirname(filePath)
+    await fs.mkdir(dir, { recursive: true })
+
+    // Remove data URL prefix if present (data:image/png;base64,...)
+    const cleanBase64 = base64Data.replace(/^data:image\/\w+;base64,/, '')
+
+    // Convert base64 to buffer
+    const buffer = Buffer.from(cleanBase64, 'base64')
+
+    // Use temp file + rename for atomic writes
+    const tempPath = `${filePath}.tmp.${Date.now()}.${Math.random().toString(36).substring(7)}`
+    await fs.writeFile(tempPath, buffer)
+
+    // Rename is atomic on most filesystems
+    await fs.rename(tempPath, filePath)
+
+    return { success: true, path: filePath }
   } catch (error) {
     return { success: false, error: error.message }
   }
@@ -420,6 +449,36 @@ ipcMain.handle('shell:openExternal', async (event, url) => {
   } catch (error) {
     return { success: false, error: error.message }
   }
+})
+
+// ===== Window Controls for Custom Title Bar =====
+ipcMain.handle('window:minimize', () => {
+  if (mainWindow) {
+    mainWindow.minimize()
+  }
+})
+
+ipcMain.handle('window:maximize', () => {
+  if (mainWindow) {
+    if (mainWindow.isMaximized()) {
+      mainWindow.unmaximize()
+    } else {
+      mainWindow.maximize()
+    }
+  }
+})
+
+ipcMain.handle('window:close', () => {
+  if (mainWindow) {
+    mainWindow.close()
+  }
+})
+
+ipcMain.handle('window:isMaximized', () => {
+  if (mainWindow) {
+    return mainWindow.isMaximized()
+  }
+  return false
 })
 
 console.log('Electron main process started')

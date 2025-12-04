@@ -52,7 +52,7 @@ export function CustomProvidersTab({
             {customProviders.map((customProvider) => (
               <div
                 key={customProvider.id}
-                className="border rounded-lg p-4 space-y-3"
+                className="border rounded-lg p-4 space-y-3 bg-muted/50"
               >
                 {/* Provider Header */}
                 <div className="flex items-start justify-between">

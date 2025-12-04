@@ -7,6 +7,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   fs: {
     readFile: (filePath) => ipcRenderer.invoke('fs:readFile', filePath),
     writeFile: (filePath, content) => ipcRenderer.invoke('fs:writeFile', filePath, content),
+    writeBinaryFile: (filePath, base64Data) => ipcRenderer.invoke('fs:writeBinaryFile', filePath, base64Data),
     deleteFile: (filePath) => ipcRenderer.invoke('fs:deleteFile', filePath),
     readDir: (dirPath) => ipcRenderer.invoke('fs:readDir', dirPath),
     exists: (filePath) => ipcRenderer.invoke('fs:exists', filePath),
@@ -31,6 +32,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Shell operations
   shell: {
     openExternal: (url) => ipcRenderer.invoke('shell:openExternal', url)
+  },
+
+  // Window controls
+  window: {
+    minimize: () => ipcRenderer.invoke('window:minimize'),
+    maximize: () => ipcRenderer.invoke('window:maximize'),
+    close: () => ipcRenderer.invoke('window:close'),
+    isMaximized: () => ipcRenderer.invoke('window:isMaximized')
   },
 
   // App info

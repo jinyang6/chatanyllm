@@ -17,7 +17,8 @@ export function ProviderProvider({ children }) {
   const [apiKeys, setApiKeys] = useState({
     openrouter: '',
     openai: '',
-    gemini: ''
+    gemini: '',
+    anthropic: ''
   })
 
   // Initialize from storage on mount

@@ -106,6 +106,52 @@ export const PROVIDERS = [
         description: 'Production-ready multimodal model with strong performance'
       }
     ]
+  },
+  {
+    id: 'anthropic',
+    name: 'Anthropic Claude',
+    description: 'Advanced AI assistant with extended context and reasoning capabilities',
+    badge: null,
+    badgeVariant: null,
+    apiKeyUrl: 'https://console.anthropic.com/settings/keys',
+    apiBaseUrl: 'https://api.anthropic.com',
+    modelsEndpoint: '/v1/models',
+    authHeaderKey: 'x-api-key',
+    authHeaderValue: '{key}',
+    supportsDynamicFetch: true,
+    requiresApiKey: true,
+    fallbackModels: [
+      {
+        id: 'claude-sonnet-4-5-20250929',
+        name: 'Claude Sonnet 4.5',
+        contextWindow: '200k',
+        description: 'Latest and most capable Claude model with extended thinking'
+      },
+      {
+        id: 'claude-opus-4-20250514',
+        name: 'Claude Opus 4',
+        contextWindow: '200k',
+        description: 'Powerful model for complex reasoning and analysis'
+      },
+      {
+        id: 'claude-3-7-sonnet-20250219',
+        name: 'Claude 3.7 Sonnet',
+        contextWindow: '200k',
+        description: 'Enhanced version with improved performance'
+      },
+      {
+        id: 'claude-3-5-sonnet-20241022',
+        name: 'Claude 3.5 Sonnet',
+        contextWindow: '200k',
+        description: 'Balanced performance and intelligence'
+      },
+      {
+        id: 'claude-3-5-haiku-20241022',
+        name: 'Claude 3.5 Haiku',
+        contextWindow: '200k',
+        description: 'Fast and efficient for everyday tasks'
+      }
+    ]
   }
 ]
 

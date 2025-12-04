@@ -153,6 +153,56 @@ async function fetchGeminiModels(apiKey) {
 }
 
 /**
+ * Fetch models from Anthropic Claude
+ */
+async function fetchAnthropicModels(apiKey) {
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT)
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/models', {
+      headers: {
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01'
+      },
+      signal: controller.signal
+    })
+
+    clearTimeout(timeoutId)
+
+    if (!response.ok) {
+      if (response.status === 401 || response.status === 403) {
+        throw new Error('Invalid API key. Please check your Anthropic API key.')
+      }
+      if (response.status === 429) {
+        throw new Error('Rate limited. Please try again in a minute.')
+      }
+      throw new Error(`Failed to fetch models: ${response.statusText}`)
+    }
+
+    const data = await response.json()
+
+    // Anthropic returns models in data array
+    return data.data.map(model => ({
+      id: model.id,
+      name: formatAnthropicName(model.display_name || model.id),
+      contextWindow: '200k', // Anthropic models generally support 200k context
+      description: model.id.includes('opus') ? 'Powerful model for complex reasoning'
+        : model.id.includes('sonnet') ? 'Balanced performance and intelligence'
+        : model.id.includes('haiku') ? 'Fast and efficient model'
+        : '',
+      pricing: null
+    }))
+  } catch (error) {
+    clearTimeout(timeoutId)
+    if (error.name === 'AbortError') {
+      throw new Error('Request timeout. Please check your connection.')
+    }
+    throw error
+  }
+}
+
+/**
  * Fetch models from custom provider
  */
 async function fetchCustomProviderModels(providerConfig, apiKey) {
@@ -232,6 +282,9 @@ export async function fetchModelsForProvider(providerId, apiKey, customProviderC
     case 'gemini':
       return await fetchGeminiModels(apiKey)
 
+    case 'anthropic':
+      return await fetchAnthropicModels(apiKey)
+
     default:
       // Custom provider
       if (customProviderConfig) {
@@ -263,6 +316,38 @@ function formatModelName(modelId) {
 function formatGeminiName(name) {
   if (!name) return 'Unknown'
   return name.replace('models/', '').replace(/-/g, ' ')
+}
+
+function formatAnthropicName(name) {
+  if (!name) return 'Unknown'
+  // Convert "claude-3-5-sonnet-20241022" to "Claude 3.5 Sonnet"
+  const parts = name.split('-')
+  if (parts[0] === 'claude') {
+    // Extract version and model name
+    const versionParts = []
+    const nameParts = []
+    let foundVersion = false
+
+    for (let i = 1; i < parts.length; i++) {
+      const part = parts[i]
+      // Check if it's a number or date
+      if (!isNaN(part) && part.length <= 2 && !foundVersion) {
+        versionParts.push(part)
+      } else if (part.length === 8 && !isNaN(part)) {
+        // Date part, skip
+        break
+      } else {
+        foundVersion = true
+        nameParts.push(part.charAt(0).toUpperCase() + part.slice(1))
+      }
+    }
+
+    if (versionParts.length > 0 && nameParts.length > 0) {
+      return `Claude ${versionParts.join('.')} ${nameParts.join(' ')}`
+    }
+  }
+  // Fallback
+  return name.replace(/-/g, ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
 }
 
 function getOpenAIContextWindow(modelId) {

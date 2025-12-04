@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
+import { Toaster } from 'sonner'
 import { ProviderProvider } from './contexts/ProviderContext'
 import { ConversationProvider } from './contexts/ConversationContext'
 import { ErrorProvider } from './contexts/ErrorContext'
+import TitleBar from './components/TitleBar'
 import Sidebar from './components/Sidebar'
 import ChatWindow from './components/ChatWindow'
 import SettingsModal from './components/SettingsModal'
@@ -54,28 +56,37 @@ function App() {
     <ErrorProvider>
       <ProviderProvider>
         <ConversationProvider>
-          <div className="flex h-screen bg-background overflow-hidden">
-            {/* Collapsible Sidebar */}
-            <Sidebar
-              isOpen={sidebarOpen}
-              currentConversation={currentConversation}
-              onSelectConversation={setCurrentConversation}
-              onOpenSettings={() => setShowSettings(true)}
-            />
+          <div className="flex flex-col h-screen bg-background overflow-hidden">
+            {/* Custom Title Bar (Electron only) */}
+            <TitleBar />
 
-            {/* Main Chat Area */}
-            <ChatWindow
-              conversationId={currentConversation}
-              onOpenSettings={() => setShowSettings(true)}
-              sidebarOpen={sidebarOpen}
-              onToggleSidebar={() => setSidebarOpen(prev => !prev)}
-            />
+            {/* Main Content Area */}
+            <div className="flex flex-1 overflow-hidden">
+              {/* Collapsible Sidebar */}
+              <Sidebar
+                isOpen={sidebarOpen}
+                currentConversation={currentConversation}
+                onSelectConversation={setCurrentConversation}
+                onOpenSettings={() => setShowSettings(true)}
+              />
 
-            {/* Settings Modal */}
-            {showSettings && (
-              <SettingsModal onClose={() => setShowSettings(false)} />
-            )}
+              {/* Main Chat Area */}
+              <ChatWindow
+                conversationId={currentConversation}
+                onOpenSettings={() => setShowSettings(true)}
+                sidebarOpen={sidebarOpen}
+                onToggleSidebar={() => setSidebarOpen(prev => !prev)}
+              />
+
+              {/* Settings Modal */}
+              {showSettings && (
+                <SettingsModal onClose={() => setShowSettings(false)} />
+              )}
+            </div>
           </div>
+
+          {/* Toast Notifications */}
+          <Toaster richColors position="bottom-right" />
         </ConversationProvider>
       </ProviderProvider>
     </ErrorProvider>

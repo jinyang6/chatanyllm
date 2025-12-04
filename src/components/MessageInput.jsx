@@ -5,6 +5,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 import { formatFileSize } from '@/utils/messageFormatters'
+import { convertImageToPNG, calculateBase64Size } from '@/utils/imageConverter'
+import { toast } from 'sonner'
 
 function MessageInput({ onSendMessage, isStreaming = false, onStopGeneration, disabled = false }) {
   const [message, setMessage] = useState('')
@@ -58,6 +60,47 @@ function MessageInput({ onSendMessage, isStreaming = false, onStopGeneration, di
 
   const handleChange = (e) => {
     setMessage(e.target.value)
+  }
+
+  const handlePaste = async (e) => {
+    const items = e.clipboardData?.items
+    if (!items) return
+
+    for (const item of items) {
+      if (item.type.startsWith('image/')) {
+        e.preventDefault() // Prevent pasting image as text
+
+        const file = item.getAsFile()
+        if (!file) continue
+
+        // Check file size (10MB limit)
+        if (file.size > 10 * 1024 * 1024) {
+          toast.error('Image too large (max 10MB)')
+          continue
+        }
+
+        try {
+          // Convert to PNG format
+          const pngDataUrl = await convertImageToPNG(file)
+
+          // Create attachment
+          const attachment = {
+            id: Date.now().toString() + Math.random(),
+            name: `pasted-${Date.now()}.png`,
+            type: 'image/png',
+            size: calculateBase64Size(pngDataUrl),
+            data: pngDataUrl,
+            isImage: true
+          }
+
+          setAttachments(prev => [...prev, attachment])
+          // No success toast - silent operation
+        } catch (error) {
+          console.error('Paste error:', error)
+          toast.error(`Failed to paste image: ${error.message || 'Unknown error'}`)
+        }
+      }
+    }
   }
 
   const handleStop = (e) => {
@@ -204,10 +247,11 @@ function MessageInput({ onSendMessage, isStreaming = false, onStopGeneration, di
               value={message}
               onChange={handleChange}
               onKeyDown={handleKeyDown}
+              onPaste={handlePaste}
               placeholder={
                 isStreaming
                   ? 'Waiting for response...'
-                  : 'Send a message... (Shift+Enter for new line)'
+                  : 'Send a message... (Shift+Enter for new line, Ctrl+V to paste images)'
               }
               disabled={isDisabled}
               className="min-h-[44px] max-h-[400px] resize-none border-0 bg-transparent px-2 py-2 text-base shadow-none focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-50 flex-1"

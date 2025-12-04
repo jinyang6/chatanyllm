@@ -5,6 +5,7 @@
 
 import * as openAIAdapter from './adapters/openAIAdapter'
 import * as geminiAdapter from './adapters/geminiAdapter'
+import * as anthropicAdapter from './adapters/anthropicAdapter'
 import { getProviderById } from '@/config/providers'
 
 /**
@@ -113,6 +114,25 @@ export async function sendStreamingMessage({
         } catch (adapterError) {
           // Safety net: Catch any unexpected errors from adapter
           console.error('Unexpected error from Gemini adapter:', adapterError)
+          throw adapterError
+        }
+
+      case 'anthropic':
+        try {
+          return await anthropicAdapter.sendStreamingMessage({
+            apiKey,
+            model,
+            messages,
+            onChunk,
+            onReasoningChunk,
+            onReasoningComplete,
+            onComplete,
+            onError,
+            abortSignal
+          })
+        } catch (adapterError) {
+          // Safety net: Catch any unexpected errors from adapter
+          console.error('Unexpected error from Anthropic adapter:', adapterError)
           throw adapterError
         }
 

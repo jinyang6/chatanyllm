@@ -76,7 +76,7 @@ function SettingsModal({ onClose }) {
     }
   }
 
-  const handleSave = async () => {
+  const handleSave = async (showNotification = true) => {
     // Auto-fetch models for providers with valid API keys
     for (const prov of allProviders) {
       if (apiKeys[prov.id] && prov.supportsDynamicFetch !== false) {
@@ -89,10 +89,12 @@ function SettingsModal({ onClose }) {
       }
     }
 
-    showSuccess(
-      'Settings Saved',
-      'Your configuration has been saved successfully.'
-    )
+    if (showNotification) {
+      showSuccess(
+        'Settings Saved',
+        'Your configuration has been saved successfully.'
+      )
+    }
   }
 
   const handleTestConnection = async (providerId) => {
@@ -135,15 +137,8 @@ function SettingsModal({ onClose }) {
         })
       }
 
-      // Show alert based on result
-      if (result.success) {
-        showSuccess(
-          result.title,
-          result.message,
-          result.details,
-          null
-        )
-      } else {
+      // Only show alert for errors, success is silent (button state changes only)
+      if (!result.success) {
         showError(
           result.title,
           result.message,
@@ -205,8 +200,13 @@ function SettingsModal({ onClose }) {
   }
 
   return (
-    <Dialog open={true} onOpenChange={(open) => { if (!open) onClose() }}>
-      <DialogContent className="max-w-2xl" onInteractOutside={(e) => e.preventDefault()}>
+    <Dialog open={true} onOpenChange={(open) => {
+      if (!open) {
+        handleSave(false) // Auto-save without notification when closing
+        onClose()
+      }
+    }}>
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
           <div className="flex items-center gap-2">
             <KeyIcon className="h-5 w-5" />

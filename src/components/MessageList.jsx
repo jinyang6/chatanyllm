@@ -15,13 +15,15 @@ import { Textarea } from '@/components/ui/textarea'
 import { Bot as BotIcon, User as UserIcon, RefreshCw as RefreshCwIcon, Pencil as PencilIcon, Check as CheckIcon, X as XIcon, Trash2 as Trash2Icon, FileText as FileIcon, Loader, LoaderCircle, Copy as CopyIcon, ChevronDown, ChevronUp } from 'lucide-react'
 import { CopyButton } from '@/components/ui/copy-button'
 import { formatFileSize } from '@/utils/messageFormatters'
+import { ImagePreviewModal } from '@/components/ImagePreviewModal'
+import { downloadImage, extractImageName } from '@/utils/imageDownload'
 
 // Simple function components for react-markdown - filter out ref prop to avoid React 18 errors
 const CodeComponent = (props) => {
   const { inline, className, children, ref, ...rest } = props
   if (inline) {
     return (
-      <code className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono" {...rest}>
+      <code className="bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-1.5 py-0.5 rounded text-sm font-mono border border-gray-300 dark:border-gray-600" {...rest}>
         {children}
       </code>
     )
@@ -53,8 +55,8 @@ const PreComponent = (props) => {
   const codeText = getCodeText()
 
   return (
-    <div className="relative group my-3">
-      <pre className="bg-muted/80 p-4 pr-12 rounded-lg overflow-x-auto text-sm max-w-full" {...rest}>
+    <div className="relative group my-4">
+      <pre className="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 p-4 pr-12 rounded-lg overflow-x-auto max-w-full border border-gray-300 dark:border-gray-700" {...rest}>
         {children}
       </pre>
       {codeText && (
@@ -87,14 +89,11 @@ const MemoizedMarkdownContent = memo(({ content }) => {
       }}
       components={{
         // Custom component overrides for better styling
-        p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
-        ul: ({ children }) => <ul className="list-disc pl-4 mb-2">{children}</ul>,
-        ol: ({ children }) => <ol className="list-decimal pl-4 mb-2">{children}</ol>,
-        li: ({ children }) => <li className="mb-1">{children}</li>,
+        p: ({ children }) => <p className="mb-2 last:mb-0 text-justify">{children}</p>,
         code: CodeComponent,
         pre: PreComponent,
         blockquote: ({ children }) => (
-          <blockquote className="border-l-4 border-primary/50 pl-4 italic my-3">
+          <blockquote className="border-l-4 border-primary/50 pl-4 italic my-3 text-gray-800 dark:text-gray-300">
             {children}
           </blockquote>
         ),
@@ -108,17 +107,17 @@ const MemoizedMarkdownContent = memo(({ content }) => {
         thead: ({ children }) => <thead className="bg-muted">{children}</thead>,
         tbody: ({ children }) => <tbody>{children}</tbody>,
         tr: ({ children }) => <tr className="border-b border-border">{children}</tr>,
-        th: ({ children }) => <th className="px-4 py-2 text-left font-semibold">{children}</th>,
-        td: ({ children }) => <td className="px-4 py-2">{children}</td>,
+        th: ({ children }) => <th className="px-4 py-2 text-left font-semibold text-gray-900 dark:text-gray-100">{children}</th>,
+        td: ({ children }) => <td className="px-4 py-2 text-gray-900 dark:text-gray-100">{children}</td>,
         a: ({ href, children }) => (
           <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
             {children}
           </a>
         ),
-        h1: ({ children }) => <h1 className="text-2xl font-bold mt-4 mb-2">{children}</h1>,
-        h2: ({ children }) => <h2 className="text-xl font-bold mt-3 mb-2">{children}</h2>,
-        h3: ({ children }) => <h3 className="text-lg font-semibold mt-3 mb-1">{children}</h3>,
-        h4: ({ children }) => <h4 className="text-base font-semibold mt-2 mb-1">{children}</h4>,
+        h1: ({ children }) => <h1 className="text-2xl font-bold mt-4 mb-2 text-gray-900 dark:text-gray-100">{children}</h1>,
+        h2: ({ children }) => <h2 className="text-xl font-bold mt-3 mb-2 text-gray-900 dark:text-gray-100">{children}</h2>,
+        h3: ({ children }) => <h3 className="text-lg font-semibold mt-3 mb-1 text-gray-900 dark:text-gray-100">{children}</h3>,
+        h4: ({ children }) => <h4 className="text-base font-semibold mt-2 mb-1 text-gray-900 dark:text-gray-100">{children}</h4>,
         hr: () => <hr className="my-4 border-border" />,
         img: ({ src, alt }) => {
           // Removed console.log for performance during rendering
@@ -127,17 +126,7 @@ const MemoizedMarkdownContent = memo(({ content }) => {
               src={src}
               alt={alt || 'Image'}
               className="max-w-full h-auto rounded-lg my-3 cursor-pointer hover:opacity-90 border border-border"
-              onClick={() => {
-                if (src?.startsWith('data:')) {
-                  // For data URLs, open in new tab by creating a blob
-                  const newTab = window.open()
-                  if (newTab) {
-                    newTab.document.write(`<img src="${src}" style="max-width: 100%;" />`)
-                  }
-                } else {
-                  window.open(src, '_blank')
-                }
-              }}
+              onClick={() => setPreviewImage({ url: src, name: extractImageName(src, alt || 'markdown-image.png') })}
               onError={(e) => {
                 console.error('Image failed to load. Src length:', src?.length, 'First 100 chars:', src?.substring(0, 100))
                 e.target.style.display = 'none'
@@ -178,6 +167,7 @@ function MessageList({ messages, onRetry, onEditUserMessage, onDeleteMessage, is
   const processedMessagesRef = useRef(new Set())
   const thinkingScrollRefs = useRef(new Map())
   const scrollThrottleRef = useRef(null)
+  const [previewImage, setPreviewImage] = useState(null)
 
   // Auto-scroll thinking section to show latest tokens (optimized with throttle)
   useEffect(() => {
@@ -401,7 +391,7 @@ function MessageList({ messages, onRetry, onEditUserMessage, onDeleteMessage, is
                               src={attachment.data}
                               alt={attachment.name}
                               className="h-5 w-5 object-cover rounded cursor-pointer hover:opacity-90"
-                              onClick={() => window.open(attachment.data, '_blank')}
+                              onClick={() => setPreviewImage({ url: attachment.data, name: attachment.name })}
                             />
                           ) : (
                             <FileIcon className="h-5 w-5 text-muted-foreground flex-shrink-0" />
@@ -415,10 +405,10 @@ function MessageList({ messages, onRetry, onEditUserMessage, onDeleteMessage, is
                   </ScrollArea>
                 )}
                 <Card
-                  className={`p-4 shadow-sm w-fit max-w-full overflow-hidden ${
+                  className={`p-4 w-fit max-w-full overflow-hidden border-0 shadow-none ${
                     message.role === 'user'
-                      ? 'bg-secondary text-foreground border-border'
-                      : 'bg-card text-card-foreground border-border'
+                      ? 'bg-muted text-foreground'
+                      : 'bg-transparent text-card-foreground'
                   }`}
                 >
                   {isEditing ? (
@@ -460,19 +450,18 @@ function MessageList({ messages, onRetry, onEditUserMessage, onDeleteMessage, is
                               {/* Header with expand/collapse button */}
                               <Button
                                 variant="ghost"
-                                size="sm"
-                                className="w-full justify-between mb-2 hover:bg-muted"
+                                className="w-full justify-between mb-2 hover:bg-muted py-3 px-4"
                                 onClick={() => handleToggleThinking(message.id)}
                               >
                                 <div className="flex items-center gap-2">
-                                  <LoaderCircle className="h-4 w-4 animate-spin" />
-                                  <span className="text-sm font-semibold opacity-70">Thinking</span>
-                                  <span className="text-xs opacity-50">({message.reasoning.length} chars)</span>
+                                  <LoaderCircle className="h-5 w-5 animate-spin" />
+                                  <span className="text-sm font-semibold opacity-80">Thinking</span>
+                                  <span className="text-xs opacity-60">({message.reasoning.length} chars)</span>
                                 </div>
                                 {expandedThinking.has(message.id) ? (
-                                  <ChevronUp className="h-4 w-4" />
+                                  <ChevronUp className="h-5 w-5" />
                                 ) : (
-                                  <ChevronDown className="h-4 w-4" />
+                                  <ChevronDown className="h-5 w-5" />
                                 )}
                               </Button>
 
@@ -490,7 +479,7 @@ function MessageList({ messages, onRetry, onEditUserMessage, onDeleteMessage, is
                                     }
                                   }}
                                 >
-                                  <div className="text-xs opacity-60 whitespace-pre-wrap break-words font-mono pr-3">
+                                  <div className="text-sm opacity-70 whitespace-pre-wrap break-words font-mono pr-3">
                                     {message.reasoning}
                                   </div>
                                 </ScrollArea>
@@ -501,18 +490,17 @@ function MessageList({ messages, onRetry, onEditUserMessage, onDeleteMessage, is
                             <>
                               <Button
                                 variant="ghost"
-                                size="sm"
-                                className="w-full justify-between mb-2 hover:bg-muted"
+                                className="w-full justify-between mb-2 hover:bg-muted py-3 px-4"
                                 onClick={() => handleToggleThinking(message.id)}
                               >
                                 <div className="flex items-center gap-2">
-                                  <span className="text-sm font-semibold opacity-70">Thinking</span>
-                                  <span className="text-xs opacity-50">({message.reasoning.length} chars)</span>
+                                  <span className="text-sm font-semibold opacity-80">Thinking</span>
+                                  <span className="text-xs opacity-60">({message.reasoning.length} chars)</span>
                                 </div>
                                 {expandedThinking.has(message.id) ? (
-                                  <ChevronUp className="h-4 w-4" />
+                                  <ChevronUp className="h-5 w-5" />
                                 ) : (
-                                  <ChevronDown className="h-4 w-4" />
+                                  <ChevronDown className="h-5 w-5" />
                                 )}
                               </Button>
 
@@ -520,7 +508,7 @@ function MessageList({ messages, onRetry, onEditUserMessage, onDeleteMessage, is
                               {expandedThinking.has(message.id) && (
                                 <div className="relative w-full">
                                   <ScrollArea className="h-[300px] w-full">
-                                    <div className="text-xs opacity-60 whitespace-pre-wrap break-words font-mono pr-3">
+                                    <div className="text-sm opacity-70 whitespace-pre-wrap break-words font-mono pr-3">
                                       {message.reasoning}
                                     </div>
                                   </ScrollArea>
@@ -533,46 +521,38 @@ function MessageList({ messages, onRetry, onEditUserMessage, onDeleteMessage, is
 
                       {/* Response content */}
                       <div className="relative">
-                      <div className={`${collapsedMessages.has(message.id) ? 'max-h-[120px] overflow-hidden' : ''}`}>
-                        <div className="prose prose-sm max-w-none break-words">
+                      <div className={`relative ${collapsedMessages.has(message.id) ? 'max-h-[120px] overflow-hidden' : ''}`}>
+                        <div className="prose prose-lg max-w-none break-words prose-ul:list-disc prose-ol:list-decimal prose-li:marker:text-gray-900 dark:prose-li:marker:text-gray-100 prose-p:text-gray-900 dark:prose-p:text-gray-100">
                           <MemoizedMarkdownContent content={cleanContent} />
-                      {/* Display generated images separately */}
-                      {generatedImages.length > 0 && (
-                        <div className="mt-4 space-y-3">
-                          {generatedImages.map((imageUrl, imgIndex) => (
-                            <div key={imgIndex} className="rounded-lg border border-border overflow-hidden">
-                              <img
-                                src={imageUrl}
-                                alt={`Generated Image ${imgIndex + 1}`}
-                                className="w-full h-auto cursor-pointer hover:opacity-90 transition-opacity"
-                                onClick={() => {
-                                  if (imageUrl?.startsWith('data:')) {
-                                    const newTab = window.open()
-                                    if (newTab) {
-                                      newTab.document.write(`<img src="${imageUrl}" style="max-width: 100%;" />`)
-                                    }
-                                  } else {
-                                    window.open(imageUrl, '_blank')
-                                  }
-                                }}
-                                onError={(e) => {
-                                  console.error('Generated image failed to load')
-                                  e.target.style.display = 'none'
-                                  e.target.insertAdjacentHTML('afterend',
-                                    '<div class="text-sm text-red-500 p-4">Image failed to load</div>'
-                                  )
-                                }}
-                              />
-                            </div>
-                          ))}
                         </div>
-                      )}
-                        </div>
+                        {/* Display generated images separately */}
+                        {generatedImages.length > 0 && (
+                          <div className="mt-4 space-y-3">
+                            {generatedImages.map((imageUrl, imgIndex) => (
+                              <div key={imgIndex} className="rounded-lg border border-border overflow-hidden">
+                                <img
+                                  src={imageUrl}
+                                  alt={`Generated Image ${imgIndex + 1}`}
+                                  className="w-full h-auto cursor-pointer hover:opacity-90 transition-opacity"
+                                  onClick={() => setPreviewImage({ url: imageUrl, name: `generated-${imgIndex + 1}.png` })}
+                                  onError={(e) => {
+                                    console.error('Generated image failed to load')
+                                    e.target.style.display = 'none'
+                                    e.target.insertAdjacentHTML('afterend',
+                                      '<div class="text-sm text-red-500 p-4">Image failed to load</div>'
+                                    )
+                                  }}
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        {/* Gradient fade when collapsed */}
+                        {collapsedMessages.has(message.id) && (
+                          <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background/95 via-background/40 to-transparent pointer-events-none" />
+                        )}
                       </div>
-                      {/* Gradient fade when collapsed */}
-                      {collapsedMessages.has(message.id) && (
-                        <div className={`absolute bottom-11 left-0 right-0 h-12 bg-gradient-to-t ${message.role === 'user' ? 'from-secondary via-secondary/80' : 'from-card via-card/80'} to-transparent pointer-events-none`} />
-                      )}
+                      </div>
                       {/* Collapse/Expand button */}
                       {cleanContent.length > 500 && (
                         <Button
@@ -594,7 +574,6 @@ function MessageList({ messages, onRetry, onEditUserMessage, onDeleteMessage, is
                           )}
                         </Button>
                       )}
-                    </div>
                     </>
                   )}
                 </Card>
@@ -695,6 +674,15 @@ function MessageList({ messages, onRetry, onEditUserMessage, onDeleteMessage, is
         })}
         <div ref={messagesEndRef} style={{ height: 1 }} />
       </div>
+
+      {/* Image Preview Modal */}
+      <ImagePreviewModal
+        imageUrl={previewImage?.url}
+        imageName={previewImage?.name}
+        isOpen={!!previewImage}
+        onClose={() => setPreviewImage(null)}
+        onDownload={downloadImage}
+      />
     </ScrollArea>
   )
 }
