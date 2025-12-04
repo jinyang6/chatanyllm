@@ -254,7 +254,7 @@ function MessageInput({ onSendMessage, isStreaming = false, onStopGeneration, di
                   : 'Send a message... (Shift+Enter for new line, Ctrl+V to paste images)'
               }
               disabled={isDisabled}
-              className="min-h-[44px] max-h-[400px] resize-none border-0 bg-transparent px-2 py-2 text-base shadow-none focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-50 flex-1"
+              className="min-h-[44px] max-h-[400px] resize-none border-0 bg-transparent px-4 py-3.5 text-base md:text-base font-normal text-black dark:text-white leading-[1.5] antialiased shadow-none focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-50 flex-1"
               rows={1}
             />
 
