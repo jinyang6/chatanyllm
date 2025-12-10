@@ -2,7 +2,9 @@
 
 A desktop chat application for interacting with multiple AI language models through a unified interface.
 
-![ChatAnyLLM](assets/screenshots/hero.png)
+<p align="center">
+  <img src="assets/screenshots/hero.png" alt="ChatAnyLLM" style="border-radius: 8px;" />
+</p>
 
 ## Features
 
