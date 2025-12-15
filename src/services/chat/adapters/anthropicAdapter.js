@@ -12,7 +12,11 @@ export async function sendStreamingMessage({
   onReasoningComplete,
   onComplete,
   onError,
-  abortSignal
+  abortSignal,
+  temperature = 1.0,
+  maxTokens = 8192,
+  topP = null,
+  topK = null
 }) {
   let fullContent = ''
   let fullReasoning = ''
@@ -21,6 +25,17 @@ export async function sendStreamingMessage({
   let currentBlockType = null // Track if we're in a thinking block
 
   try {
+    // Validate required parameters
+    if (!apiKey || typeof apiKey !== 'string') {
+      throw new Error('Invalid API key')
+    }
+    if (!model || typeof model !== 'string') {
+      throw new Error('Invalid model')
+    }
+    if (!Array.isArray(messages) || messages.length === 0) {
+      throw new Error('Messages must be a non-empty array')
+    }
+
     // Convert messages to Anthropic format
     // Extract system message if present (Anthropic requires it separately)
     let systemMessage = null
@@ -39,10 +54,15 @@ export async function sendStreamingMessage({
 
     const requestBody = {
       model,
-      max_tokens: 4096,
+      max_tokens: maxTokens,
       messages: anthropicMessages,
-      stream: true
+      stream: true,
+      temperature
     }
+
+    // Add optional parameters
+    if (topP !== null) requestBody.top_p = topP
+    if (topK !== null) requestBody.top_k = topK
 
     // Add system message if present
     if (systemMessage) {
@@ -94,7 +114,6 @@ export async function sendStreamingMessage({
     while (true) {
       // Check if stream was aborted before reading next chunk
       if (abortSignal?.aborted) {
-        console.log('Stream aborted - exiting read loop early')
         break
       }
 
@@ -112,7 +131,7 @@ export async function sendStreamingMessage({
       for (const line of lines) {
         const trimmedLine = line.trim()
 
-        // Skip empty lines and comments
+        // Skip empty lines and SSE comments
         if (!trimmedLine || trimmedLine.startsWith(':')) continue
 
         // SSE format can be "event: type" or "data: {json}"
@@ -131,13 +150,11 @@ export async function sendStreamingMessage({
             switch (parsed.type) {
               case 'message_start':
                 // Message started
-                console.log('Message started:', parsed.message?.id)
                 break
 
               case 'content_block_start':
                 // New content block starting
                 currentBlockType = parsed.content_block?.type
-                console.log('Content block started:', currentBlockType)
                 break
 
               case 'content_block_delta':
@@ -174,14 +191,10 @@ export async function sendStreamingMessage({
 
               case 'message_delta':
                 // Message metadata update (e.g., stop_reason)
-                if (parsed.delta?.stop_reason) {
-                  console.log('Message finished, stop_reason:', parsed.delta.stop_reason)
-                }
                 break
 
               case 'message_stop':
                 // Stream ended
-                console.log('Stream finished')
                 break
 
               case 'ping':
@@ -195,51 +208,47 @@ export async function sendStreamingMessage({
                 return
 
               default:
-                console.log('Unknown event type:', parsed.type)
+                // Unknown event type, ignore
+                break
             }
           } catch (parseError) {
-            console.warn('Failed to parse SSE data:', data, parseError)
+            if (process.env.NODE_ENV === 'development') {
+              console.warn('Failed to parse SSE data:', parseError)
+            }
           }
         }
       }
 
       // Check if stream was aborted after processing this chunk
       if (abortSignal?.aborted) {
-        console.log('Stream aborted - exiting after chunk processing')
         break
       }
     }
 
-    // If we accumulated reasoning but never marked it complete, do so now
+    // Finalize reasoning if it exists but wasn't marked complete
     if (fullReasoning && !reasoningDone && onReasoningComplete) {
       onReasoningComplete()
     }
 
-    // Call onComplete only once
+    // Call onComplete callback once
     if (!completeCalled) {
       completeCalled = true
       onComplete(fullContent)
     }
   } catch (error) {
-    // Check if it was aborted
+    // Handle abort signal
     if (error.name === 'AbortError') {
-      console.log('Stream aborted by user')
-      console.log('Abort cleanup - fullReasoning length:', fullReasoning.length, 'reasoningDone:', reasoningDone)
-
-      // Cleanup: save and mark reasoning complete if it exists but wasn't marked
+      // Save accumulated reasoning before finalizing
       if (fullReasoning.length > 0 && !reasoningDone) {
-        console.log('Saving reasoning on abort:', fullReasoning.substring(0, 100))
-        // Save the accumulated reasoning first
         if (onReasoningChunk) {
           onReasoningChunk('', fullReasoning)
         }
-        // Then mark it as complete
         if (onReasoningComplete) {
           onReasoningComplete()
         }
       }
 
-      // Finalize the message with whatever content we have so far (only if not already called)
+      // Finalize with partial content
       if (!completeCalled) {
         completeCalled = true
         onComplete(fullContent)

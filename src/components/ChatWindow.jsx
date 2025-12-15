@@ -621,7 +621,7 @@ function ChatWindow({ conversationId, onOpenSettings, sidebarOpen, onToggleSideb
 
           {/* Provider/Model Selection Container */}
           <div className="border rounded-xl p-3 flex items-center gap-3 w-fit shadow-sm bg-background">
-          <Badge variant="secondary" className="text-sm px-3 py-1">Provider</Badge>
+          <Badge variant="secondary" className="text-sm px-3 py-1 bg-muted text-foreground hover:bg-muted pointer-events-none">Provider</Badge>
           <SearchableSelect
             value={provider}
             onValueChange={(value) => {
@@ -646,7 +646,7 @@ function ChatWindow({ conversationId, onOpenSettings, sidebarOpen, onToggleSideb
 
           <Separator orientation="vertical" className="h-6" />
 
-          <Badge variant="secondary" className="text-sm px-3 py-1">Model</Badge>
+          <Badge variant="secondary" className="text-sm px-3 py-1 bg-muted text-foreground hover:bg-muted pointer-events-none">Model</Badge>
           <SearchableSelect
             value={model}
             onValueChange={(value) => {
