@@ -40,10 +40,11 @@ export function ProviderProvider({ children }) {
 
         if (useElectronStorage) {
           // Load from Electron secure storage
-          const [providerResult, modelResult, apiKeysResult] = await Promise.all([
+          const [providerResult, modelResult, apiKeysResult, customProvidersResult] = await Promise.all([
             store.get('defaultProvider'),
             store.get('defaultModel'),
-            store.get('apiKeys')
+            store.get('apiKeys'),
+            store.get('customProviders')
           ])
 
           if (providerResult.success && providerResult.value) {
@@ -56,11 +57,15 @@ export function ProviderProvider({ children }) {
             // Merge loaded keys with default state to ensure all providers are present
             setApiKeys(prev => ({ ...prev, ...apiKeysResult.value }))
           }
+          if (customProvidersResult.success && customProvidersResult.value) {
+            setCustomProviders(customProvidersResult.value)
+          }
         } else {
           // Load from localStorage
           const savedProvider = localStorage.getItem('defaultProvider')
           const savedModel = localStorage.getItem('defaultModel')
           const savedApiKeys = localStorage.getItem('apiKeys')
+          const savedCustomProviders = localStorage.getItem('customProviders')
 
           if (savedProvider) setProvider(savedProvider)
           if (savedModel) setModel(savedModel)
@@ -71,6 +76,13 @@ export function ProviderProvider({ children }) {
               setApiKeys(prev => ({ ...prev, ...loadedKeys }))
             } catch (e) {
               console.error('Failed to parse stored API keys:', e)
+            }
+          }
+          if (savedCustomProviders) {
+            try {
+              setCustomProviders(JSON.parse(savedCustomProviders))
+            } catch (e) {
+              console.error('Failed to parse custom providers:', e)
             }
           }
         }
@@ -102,17 +114,7 @@ export function ProviderProvider({ children }) {
   const [modelsFetchStatus, setModelsFetchStatus] = useState({})
 
   // Custom providers added by user
-  const [customProviders, setCustomProviders] = useState(() => {
-    const stored = localStorage.getItem('customProviders')
-    if (stored) {
-      try {
-        return JSON.parse(stored)
-      } catch (e) {
-        console.error('Failed to parse custom providers:', e)
-      }
-    }
-    return []
-  })
+  const [customProviders, setCustomProviders] = useState([])
 
   // Persist to storage when values change
   useEffect(() => {
@@ -191,8 +193,24 @@ export function ProviderProvider({ children }) {
   }, [fetchedModels])
 
   useEffect(() => {
-    localStorage.setItem('customProviders', JSON.stringify(customProviders))
-  }, [customProviders])
+    // Don't save during initial load
+    if (isLoading) return
+
+    const saveCustomProviders = async () => {
+      try {
+        if (useElectronStorage) {
+          await store.set('customProviders', customProviders)
+          console.log('✅ Custom providers saved to store.json')
+        } else {
+          localStorage.setItem('customProviders', JSON.stringify(customProviders))
+          console.log('✅ Custom providers saved to localStorage')
+        }
+      } catch (error) {
+        console.error('❌ Failed to save custom providers:', error)
+      }
+    }
+    saveCustomProviders()
+  }, [customProviders, isLoading])
 
   const updateApiKey = (providerId, key) => {
     setApiKeys(prev => ({
