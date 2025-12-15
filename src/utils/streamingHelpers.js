@@ -29,7 +29,8 @@ export function createStreamingCallbacks({
 }) {
   return {
     onChunk: (chunk, fullContent) => {
-      updateLastMessage(fullContent, false, null, conversationId)
+      // Pass metadata to preserve model/provider during streaming updates
+      updateLastMessage(fullContent, false, metadata, conversationId)
     },
 
     onReasoningChunk: (reasoningChunk, fullReasoning) => {
@@ -60,7 +61,8 @@ export function createStreamingCallbacks({
 
     onError: (error) => {
       console.error('Streaming error:', error)
-      updateLastMessage(`Error: ${error.message}`, false, null, conversationId)
+      // Pass metadata to preserve model/provider even on error
+      updateLastMessage(`Error: ${error.message}`, false, metadata, conversationId)
       stopStreaming(conversationId)
 
       if (onError) {

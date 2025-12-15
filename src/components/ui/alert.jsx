@@ -39,7 +39,7 @@ AlertTitle.displayName = "AlertTitle"
 const AlertDescription = React.forwardRef(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("text-sm [&_p]:leading-relaxed", className)}
+    className={cn("text-sm text-justify [&_p]:leading-relaxed", className)}
     {...props} />
 ))
 AlertDescription.displayName = "AlertDescription"

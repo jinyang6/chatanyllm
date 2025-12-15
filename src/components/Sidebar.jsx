@@ -105,8 +105,8 @@ function Sidebar({ isOpen, currentConversation, onSelectConversation, onOpenSett
   return (
     <div
       className={`
-        border-r flex flex-col h-full bg-muted/20 transition-all duration-300 ease-in-out
-        ${isOpen ? 'w-80' : 'w-16'}
+        border-r flex flex-col h-full bg-muted/20 transition-all duration-300 ease-in-out flex-shrink-0
+        ${isOpen ? 'w-80 min-w-[320px]' : 'w-16 min-w-[64px]'}
       `}
     >
       {/* New Conversation Button */}

@@ -157,6 +157,14 @@ export const getPlatform = () => {
   return window.electronAPI.platform
 }
 
+// Signal that the app is ready (shows the window in Electron)
+export const signalAppReady = () => {
+  if (!isElectron()) {
+    return // No-op in browser mode
+  }
+  window.electronAPI.signalReady()
+}
+
 // Shell Operations
 export const openExternal = async (url) => {
   if (!isElectron()) {
@@ -215,19 +223,30 @@ export const conversations = {
       return result
     }
 
+    // Filter JSON files and read them in parallel for faster loading
+    const jsonFiles = result.files.filter(file => file.endsWith('.json'))
+
+    if (jsonFiles.length === 0) {
+      return { success: true, conversations: [] }
+    }
+
+    // Read all files in parallel
+    const readPromises = jsonFiles.map(file =>
+      fileSystem.readFile(`${dataDir}/${file}`)
+    )
+    const contents = await Promise.all(readPromises)
+
+    // Parse all successfully read files
     const conversations = []
-    for (const file of result.files) {
-      if (file.endsWith('.json')) {
-        const content = await fileSystem.readFile(`${dataDir}/${file}`)
-        if (content.success) {
-          try {
-            conversations.push(JSON.parse(content.data))
-          } catch (e) {
-            console.error('Failed to parse conversation:', file, e)
-          }
+    contents.forEach((content, index) => {
+      if (content.success) {
+        try {
+          conversations.push(JSON.parse(content.data))
+        } catch (e) {
+          console.error('Failed to parse conversation:', jsonFiles[index], e)
         }
       }
-    }
+    })
 
     return { success: true, conversations }
   },

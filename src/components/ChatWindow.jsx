@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import MessageList from './MessageList'
 import MessageInput from './MessageInput'
 import { Badge } from '@/components/ui/badge'
@@ -32,6 +32,21 @@ function ChatWindow({ conversationId, onOpenSettings, sidebarOpen, onToggleSideb
     customProviders,
     isLoading
   } = useProvider()
+
+  // Use refs to track the absolutely latest model/provider selections
+  // This solves the issue where React state updates are async and retry
+  // might read stale values if user changes model and immediately clicks retry
+  const latestModelRef = useRef(model)
+  const latestProviderRef = useRef(provider)
+
+  // Keep refs in sync with state
+  useEffect(() => {
+    latestModelRef.current = model
+  }, [model])
+
+  useEffect(() => {
+    latestProviderRef.current = provider
+  }, [provider])
   const {
     messages,
     isConversationStreaming,
@@ -140,50 +155,51 @@ function ChatWindow({ conversationId, onOpenSettings, sidebarOpen, onToggleSideb
   }, [provider, hasApiKey, isLoading]) // Run when provider, API key, or loading state changes
 
   // Get modalities for a model (wrapper for the utility function with currentModels)
-  const getModalitiesForCurrentModel = (modelId) => {
-    return getModalitiesForModel(modelId, currentModels)
+  const getModalitiesForCurrentModel = (modelId, providerId = null) => {
+    // Use provided providerId or fall back to current provider
+    const targetProvider = providerId || provider
+    const fetchedModels = getModelsForProvider(targetProvider)
+    const fallbackModels = getFallbackModels(targetProvider)
+    const models = fetchedModels.length > 0 ? fetchedModels : fallbackModels
+    return getModalitiesForModel(modelId, models)
   }
 
-  // Restore conversation's last used provider/model when switching conversations
+  const isModelThinking = (modelId, providerId = null) => {
+    // Use provided providerId or fall back to current provider
+    const targetProvider = providerId || provider
+    const fetchedModels = getModelsForProvider(targetProvider)
+    const fallbackModels = getFallbackModels(targetProvider)
+    const models = fetchedModels.length > 0 ? fetchedModels : fallbackModels
+
+    return isThinkingModel(modelId, models)
+  }
+
+  // Restore conversation's last used model when switching conversations
+  // Note: Provider restoration is handled by Sidebar.handleSelectConversation
   useEffect(() => {
-    if (isLoading) return // Wait for initial data to load
+    if (isLoading) return
+
+    // Don't restore model while streaming - user might have manually changed it
+    if (isConversationStreaming(currentConversationId)) return
 
     const conversation = getCurrentConversation()
     if (!conversation) return
 
-    // Check if conversation has saved provider and model
-    const savedProvider = conversation.provider
+    // Check if conversation has saved model
     const savedModel = conversation.model
+    if (!savedModel) return
 
-    if (!savedProvider || !savedModel) return // No saved provider/model
-
-    // Validate provider still exists
-    const providerExists = allProviders.some(p => p.id === savedProvider)
-    if (!providerExists) return // Provider no longer exists
-
-    // Get models for the saved provider
-    const providerModels = getModelsForProvider(savedProvider)
-    const providerFallbackModels = getFallbackModels(savedProvider)
+    // Get models for the current provider
+    const providerModels = getModelsForProvider(provider)
+    const providerFallbackModels = getFallbackModels(provider)
     const allModelsForProvider = [...providerModels, ...providerFallbackModels]
 
-    // Check if saved model still exists in provider's models
+    // Check if saved model exists in current provider's models and restore it
     const modelExists = allModelsForProvider.some(m => m.id === savedModel)
-
-    if (providerExists && modelExists) {
-      // Both provider and model are valid, restore them
-      if (provider !== savedProvider) {
-        setProvider(savedProvider)
-      }
-      if (model !== savedModel) {
-        setModel(savedModel)
-      }
-    } else if (providerExists) {
-      // Provider exists but model doesn't, just restore provider
-      if (provider !== savedProvider) {
-        setProvider(savedProvider)
-      }
+    if (modelExists && model !== savedModel) {
+      setModel(savedModel)
     }
-  }, [currentConversationId, isLoading]) // Run when conversation changes
+  }, [currentConversationId, isLoading]) // Only run when switching conversations, not when user changes provider manually
 
   const handleRefreshModels = async () => {
     if (needsApiKey && !hasApiKey) {
@@ -220,10 +236,15 @@ function ChatWindow({ conversationId, onOpenSettings, sidebarOpen, onToggleSideb
   }
 
   const handleSendMessage = async (messageContent, attachments = []) => {
+    // Use refs to get the absolutely latest model/provider selection
+    const currentModel = latestModelRef.current
+    const currentProvider = latestProviderRef.current
+
     // Check if we have an API key
-    const apiKey = apiKeys[provider]
+    const apiKey = apiKeys[currentProvider]
     if (!apiKey) {
-      showMissingApiKeyAlert(providerInfo.name, () => {
+      const providerName = getProviderById(currentProvider)?.name || customProviders.find(p => p.id === currentProvider)?.name
+      showMissingApiKeyAlert(providerName, () => {
         if (onOpenSettings) onOpenSettings()
       })
       return
@@ -242,8 +263,8 @@ function ChatWindow({ conversationId, onOpenSettings, sidebarOpen, onToggleSideb
       await addMessage({
         role: 'user',
         content: messageContent,
-        model,
-        provider,
+        model: currentModel,
+        provider: currentProvider,
         attachments: attachments.length > 0 ? attachments : undefined
       }, targetConversationId)
 
@@ -251,12 +272,13 @@ function ChatWindow({ conversationId, onOpenSettings, sidebarOpen, onToggleSideb
       const assistantMessage = await addMessage({
         role: 'assistant',
         content: '',
-        model,
-        provider
+        model: currentModel,
+        provider: currentProvider
       }, targetConversationId)
     } catch (error) {
       console.error('Error adding messages:', error)
-      showFetchErrorAlert(providerInfo.name, 'Failed to save message. Please try again.')
+      const providerName = getProviderById(currentProvider)?.name || customProviders.find(p => p.id === currentProvider)?.name
+      showFetchErrorAlert(providerName, 'Failed to save message. Please try again.')
       return
     }
 
@@ -276,6 +298,13 @@ function ChatWindow({ conversationId, onOpenSettings, sidebarOpen, onToggleSideb
     // Start streaming for this conversation
     const abortSignal = startStreaming(targetConversationId)
 
+    // Create metadata for the response
+    const sendMetadata = {
+      timestamp: new Date().toISOString(),
+      model: currentModel,
+      provider: currentProvider
+    }
+
     // Create streaming callbacks using utility
     const streamingCallbacks = createStreamingCallbacks({
       conversationId: targetConversationId,
@@ -284,6 +313,7 @@ function ChatWindow({ conversationId, onOpenSettings, sidebarOpen, onToggleSideb
       markReasoningComplete,
       getConversationById,
       stopStreaming,
+      metadata: sendMetadata,
       onError: (error) => {
         handleStreamingError({
           error,
@@ -296,15 +326,15 @@ function ChatWindow({ conversationId, onOpenSettings, sidebarOpen, onToggleSideb
 
     try {
       await sendStreamingMessage({
-        providerId: provider,
-        providerConfig: customProviders.find(p => p.id === provider),
+        providerId: currentProvider,
+        providerConfig: customProviders.find(p => p.id === currentProvider),
         apiKey,
-        model,
+        model: currentModel,
         messages: messagesForApi,
         ...streamingCallbacks,
         abortSignal,
-        modalities: getModalitiesForCurrentModel(model),
-        reasoning: isThinkingModel(model) ? { effort: 'high' } : null
+        modalities: getModalitiesForCurrentModel(currentModel, currentProvider),
+        reasoning: isModelThinking(currentModel, currentProvider) ? { effort: 'high' } : null
       })
     } catch (error) {
       console.error('Unexpected error:', error)
@@ -339,25 +369,38 @@ function ChatWindow({ conversationId, onOpenSettings, sidebarOpen, onToggleSideb
       return
     }
 
+    // Use refs to get the absolutely latest model/provider selection
+    // This ensures we use the user's current selection even if React state hasn't updated yet
+    const currentModel = latestModelRef.current
+    const currentProvider = latestProviderRef.current
+
     // Build messages for API call (all messages up to but not including this assistant response)
     // Use formatMessagesForAPI to properly handle attachments
     const messagesForApi = formatMessagesForAPI(messages.slice(0, messageIndex))
 
-    // Clear the assistant message content for regeneration and update metadata
-    const newMetadata = {
+    // Clear the assistant message content for regeneration
+    // First, clear with full metadata including reasoning reset
+    const clearMetadata = {
       timestamp: new Date().toISOString(),
-      model,
-      provider,
+      model: currentModel,
+      provider: currentProvider,
       reasoning: '',
       isReasoningComplete: false
     }
-    updateLastMessage('', false, newMetadata)
+    updateLastMessage('', false, clearMetadata)
 
     // Capture conversation ID at start of streaming
     const retryConversationId = currentConversationId
 
     // Start streaming
     const abortSignal = startStreaming(retryConversationId)
+
+    // Create metadata for streaming updates (without reasoning fields to avoid overwrites)
+    const streamingMetadata = {
+      timestamp: new Date().toISOString(),
+      model: currentModel,
+      provider: currentProvider
+    }
 
     // Create streaming callbacks using utility
     const streamingCallbacks = createStreamingCallbacks({
@@ -367,7 +410,7 @@ function ChatWindow({ conversationId, onOpenSettings, sidebarOpen, onToggleSideb
       markReasoningComplete,
       getConversationById,
       stopStreaming,
-      metadata: newMetadata,
+      metadata: streamingMetadata,
       onError: (error) => {
         handleStreamingError({
           error,
@@ -379,16 +422,19 @@ function ChatWindow({ conversationId, onOpenSettings, sidebarOpen, onToggleSideb
     })
 
     try {
+      const modalities = getModalitiesForCurrentModel(currentModel, currentProvider)
+      const reasoning = isModelThinking(currentModel, currentProvider) ? { effort: 'high' } : null
+
       await sendStreamingMessage({
-        providerId: provider,
-        providerConfig: customProviders.find(p => p.id === provider),
-        apiKey,
-        model,
+        providerId: currentProvider,
+        providerConfig: customProviders.find(p => p.id === currentProvider),
+        apiKey: apiKeys[currentProvider],
+        model: currentModel,
         messages: messagesForApi,
         ...streamingCallbacks,
         abortSignal,
-        modalities: getModalitiesForCurrentModel(model),
-        reasoning: isThinkingModel(model) ? { effort: 'high' } : null
+        modalities,
+        reasoning
       })
     } catch (error) {
       console.error('Unexpected retry error:', error)
@@ -402,14 +448,19 @@ function ChatWindow({ conversationId, onOpenSettings, sidebarOpen, onToggleSideb
     // Capture conversation ID at the very start (before any async operations)
     const editConversationId = currentConversationId
 
+    // Use refs to get the absolutely latest model/provider selection
+    const currentModel = latestModelRef.current
+    const currentProvider = latestProviderRef.current
+
     // Find the index of the user message
     const messageIndex = messages.findIndex(m => m.id === userMessage.id)
     if (messageIndex < 0) return
 
     // Check if we have an API key
-    const apiKey = apiKeys[provider]
+    const apiKey = apiKeys[currentProvider]
     if (!apiKey) {
-      showMissingApiKeyAlert(providerInfo.name, () => {
+      const providerName = getProviderById(currentProvider)?.name || customProviders.find(p => p.id === currentProvider)?.name
+      showMissingApiKeyAlert(providerName, () => {
         if (onOpenSettings) onOpenSettings()
       })
       return
@@ -440,17 +491,25 @@ function ChatWindow({ conversationId, onOpenSettings, sidebarOpen, onToggleSideb
         content: '',
         reasoning: '',
         isReasoningComplete: false,
-        model,
-        provider
+        model: currentModel,
+        provider: currentProvider
       }, editConversationId)
     } catch (error) {
       console.error('Error editing message:', error)
-      showFetchErrorAlert(providerInfo.name, 'Failed to edit message. Please try again.')
+      const providerName = getProviderById(currentProvider)?.name || customProviders.find(p => p.id === currentProvider)?.name
+      showFetchErrorAlert(providerName, 'Failed to edit message. Please try again.')
       return
     }
 
     // Start streaming the new response
     const abortSignal = startStreaming(editConversationId)
+
+    // Create metadata for the new response
+    const editMetadata = {
+      timestamp: new Date().toISOString(),
+      model: currentModel,
+      provider: currentProvider
+    }
 
     // Create streaming callbacks using utility
     const streamingCallbacks = createStreamingCallbacks({
@@ -460,10 +519,12 @@ function ChatWindow({ conversationId, onOpenSettings, sidebarOpen, onToggleSideb
       markReasoningComplete,
       getConversationById,
       stopStreaming,
+      metadata: editMetadata,
       onError: (error) => {
+        const providerName = getProviderById(currentProvider)?.name || customProviders.find(p => p.id === currentProvider)?.name
         handleStreamingError({
           error,
-          providerName: providerInfo.name,
+          providerName: providerName,
           errorHandlers: { showFetchErrorAlert, showInvalidApiKeyAlert, showMissingApiKeyAlert },
           onOpenSettings
         })
@@ -471,16 +532,19 @@ function ChatWindow({ conversationId, onOpenSettings, sidebarOpen, onToggleSideb
     })
 
     try {
+      const modalities = getModalitiesForCurrentModel(currentModel, currentProvider)
+      const reasoning = isModelThinking(currentModel, currentProvider) ? { effort: 'high' } : null
+
       await sendStreamingMessage({
-        providerId: provider,
-        providerConfig: customProviders.find(p => p.id === provider),
+        providerId: currentProvider,
+        providerConfig: customProviders.find(p => p.id === currentProvider),
         apiKey,
-        model,
+        model: currentModel,
         messages: messagesForApi,
         ...streamingCallbacks,
         abortSignal,
-        modalities: getModalitiesForCurrentModel(model),
-        reasoning: isThinkingModel(model) ? { effort: 'high' } : null
+        modalities,
+        reasoning
       })
     } catch (error) {
       console.error('Unexpected edit error:', error)
@@ -491,7 +555,7 @@ function ChatWindow({ conversationId, onOpenSettings, sidebarOpen, onToggleSideb
   // Show loading state while initial data loads
   if (isLoading) {
     return (
-      <div className="flex-1 flex flex-col h-full">
+      <div className="flex-1 flex flex-col h-full min-w-0">
         {/* Header skeleton */}
         <div className="border-b px-4 py-3">
           <div className="border rounded-lg p-2 flex items-center gap-2 w-fit">
@@ -521,7 +585,7 @@ function ChatWindow({ conversationId, onOpenSettings, sidebarOpen, onToggleSideb
   }
 
   return (
-    <div className="flex-1 flex flex-col h-full">
+    <div className="flex-1 flex flex-col h-full min-w-0">
       {/* Header with Provider/Model Selection */}
       <div className="border-b px-6 py-4 bg-muted/10">
         <div className="flex items-center gap-6">
@@ -561,12 +625,15 @@ function ChatWindow({ conversationId, onOpenSettings, sidebarOpen, onToggleSideb
           <SearchableSelect
             value={provider}
             onValueChange={(value) => {
+              // Update ref IMMEDIATELY (synchronously) before state updates
+              latestProviderRef.current = value
               setProvider(value)
               // Auto-select first model when cached models load
               const cached = getModelsForProvider(value)
               const fallback = getFallbackModels(value)
               const models = cached.length > 0 ? cached : fallback
               if (models.length > 0) {
+                latestModelRef.current = models[0].id
                 setModel(models[0].id)
               }
             }}
@@ -582,7 +649,11 @@ function ChatWindow({ conversationId, onOpenSettings, sidebarOpen, onToggleSideb
           <Badge variant="secondary" className="text-sm px-3 py-1">Model</Badge>
           <SearchableSelect
             value={model}
-            onValueChange={setModel}
+            onValueChange={(value) => {
+              // Update ref IMMEDIATELY (synchronously) before state updates
+              latestModelRef.current = value
+              setModel(value)
+            }}
             options={currentModels}
             placeholder={
               fetchStatus.loading

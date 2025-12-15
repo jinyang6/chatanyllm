@@ -1,13 +1,28 @@
 import { useState, useEffect } from 'react'
 import { Toaster } from 'sonner'
-import { ProviderProvider } from './contexts/ProviderContext'
-import { ConversationProvider } from './contexts/ConversationContext'
+import { ProviderProvider, useProvider } from './contexts/ProviderContext'
+import { ConversationProvider, useConversation } from './contexts/ConversationContext'
 import { ErrorProvider } from './contexts/ErrorContext'
 import TitleBar from './components/TitleBar'
 import Sidebar from './components/Sidebar'
 import ChatWindow from './components/ChatWindow'
 import SettingsModal from './components/SettingsModal'
-import { isElectron } from './lib/electron'
+import { isElectron, signalAppReady } from './lib/electron'
+
+// Inner component that signals app ready when both contexts are loaded
+function AppReadySignal() {
+  const { isLoading: providerLoading } = useProvider()
+  const { isLoading: conversationLoading } = useConversation()
+
+  useEffect(() => {
+    // Signal app ready when both contexts have finished loading
+    if (!providerLoading && !conversationLoading) {
+      signalAppReady()
+    }
+  }, [providerLoading, conversationLoading])
+
+  return null
+}
 
 function App() {
   const [currentConversation, setCurrentConversation] = useState('conv-1')
@@ -56,6 +71,9 @@ function App() {
     <ErrorProvider>
       <ProviderProvider>
         <ConversationProvider>
+          {/* Signal Electron to show window when app is ready */}
+          <AppReadySignal />
+
           <div className="flex flex-col h-screen bg-background overflow-hidden">
             {/* Custom Title Bar (Electron only) */}
             <TitleBar />

@@ -1,6 +1,7 @@
 /**
  * OpenAI-compatible chat adapter
  * Handles: OpenAI, OpenRouter, and all custom OpenAI-compatible providers
+ * Updated: 2025-01-15
  */
 
 export async function sendStreamingMessage({
@@ -120,10 +121,28 @@ export async function sendStreamingMessage({
             // Extract content from delta
             const delta = parsed.choices?.[0]?.delta
 
-            // Handle reasoning tokens (thinking)
-            if (delta?.reasoning && onReasoningChunk) {
-              fullReasoning += delta.reasoning
-              onReasoningChunk(delta.reasoning, fullReasoning)
+            // Handle reasoning tokens from multiple possible fields
+            // OpenRouter returns reasoning in delta.reasoning for DeepSeek R1 and similar models
+            let reasoningText = null
+
+            // Check standard reasoning field
+            if (delta?.reasoning) {
+              reasoningText = delta.reasoning
+            }
+            // Check reasoning_details array (alternative structure)
+            else if (delta?.reasoning_details && Array.isArray(delta.reasoning_details)) {
+              const reasoningParts = delta.reasoning_details
+                .filter(part => part.type === 'reasoning.text' && part.text)
+                .map(part => part.text)
+              if (reasoningParts.length > 0) {
+                reasoningText = reasoningParts.join('')
+              }
+            }
+
+            // Process reasoning tokens
+            if (reasoningText && onReasoningChunk) {
+              fullReasoning += reasoningText
+              onReasoningChunk(reasoningText, fullReasoning)
             }
 
             // When content starts, reasoning is complete

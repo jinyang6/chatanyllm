@@ -53,7 +53,8 @@ export function ProviderProvider({ children }) {
             setModel(modelResult.value)
           }
           if (apiKeysResult.success && apiKeysResult.value) {
-            setApiKeys(apiKeysResult.value)
+            // Merge loaded keys with default state to ensure all providers are present
+            setApiKeys(prev => ({ ...prev, ...apiKeysResult.value }))
           }
         } else {
           // Load from localStorage
@@ -65,7 +66,9 @@ export function ProviderProvider({ children }) {
           if (savedModel) setModel(savedModel)
           if (savedApiKeys) {
             try {
-              setApiKeys(JSON.parse(savedApiKeys))
+              // Merge loaded keys with default state to ensure all providers are present
+              const loadedKeys = JSON.parse(savedApiKeys)
+              setApiKeys(prev => ({ ...prev, ...loadedKeys }))
             } catch (e) {
               console.error('Failed to parse stored API keys:', e)
             }
@@ -155,7 +158,7 @@ export function ProviderProvider({ children }) {
     const saveApiKeys = async () => {
       try {
         // Get list of valid provider IDs (built-in + active custom)
-        const builtInProviders = ['openrouter', 'openai', 'gemini']
+        const builtInProviders = ['openrouter', 'openai', 'gemini', 'anthropic']
         const customProviderIds = customProviders.map(p => p.id)
         const validProviderIds = [...builtInProviders, ...customProviderIds]
 
