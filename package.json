@@ -1,6 +1,6 @@
 {
   "name": "chatanyllm",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Chat with multiple LLM providers",
   "main": "electron/main.cjs",
   "type": "module",

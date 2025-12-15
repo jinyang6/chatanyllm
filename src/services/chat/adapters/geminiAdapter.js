@@ -8,18 +8,37 @@ export async function sendStreamingMessage({
   model,
   messages,
   onChunk,
+  onReasoningChunk,
+  onReasoningComplete,
   onComplete,
   onError,
-  abortSignal
+  abortSignal,
+  temperature = 0.7,
+  maxTokens = 8192,
+  topP = null,
+  topK = null
 }) {
   let fullContent = ''
+  let fullReasoning = ''
+  let reasoningDone = false
   let completeCalled = false
 
   try {
+    // Validate required parameters
+    if (!apiKey || typeof apiKey !== 'string') {
+      throw new Error('Invalid API key')
+    }
+    if (!model || typeof model !== 'string') {
+      throw new Error('Invalid model')
+    }
+    if (!Array.isArray(messages) || messages.length === 0) {
+      throw new Error('Messages must be a non-empty array')
+    }
+
     // Convert messages to Gemini format
     // Gemini uses 'user' and 'model' roles, and 'parts' instead of 'content'
     const contents = messages
-      .filter(m => m.role !== 'system') // Gemini doesn't support system messages directly
+      .filter(m => m.role !== 'system')
       .map(m => ({
         role: m.role === 'assistant' ? 'model' : 'user',
         parts: [{ text: m.content }]
@@ -31,12 +50,18 @@ export async function sendStreamingMessage({
       contents[0].parts[0].text = `${systemMessage.content}\n\n${contents[0].parts[0].text}`
     }
 
+    const generationConfig = {
+      temperature,
+      maxOutputTokens: maxTokens
+    }
+
+    // Add optional parameters
+    if (topP !== null) generationConfig.topP = topP
+    if (topK !== null) generationConfig.topK = topK
+
     const requestBody = {
       contents,
-      generationConfig: {
-        temperature: 0.7,
-        maxOutputTokens: 8192
-      }
+      generationConfig
     }
 
     // Gemini API uses model name in URL and API key as query parameter
@@ -86,7 +111,6 @@ export async function sendStreamingMessage({
     while (true) {
       // Check if stream was aborted before reading next chunk
       if (abortSignal?.aborted) {
-        console.log('Stream aborted - exiting read loop early')
         break
       }
 
@@ -122,7 +146,18 @@ export async function sendStreamingMessage({
 
               if (content && content.parts) {
                 for (const part of content.parts) {
-                  if (part.text) {
+                  // Handle thinking/reasoning parts for Gemini 2.0 Flash Thinking
+                  if (part.thought && onReasoningChunk) {
+                    fullReasoning += part.thought
+                    onReasoningChunk(part.thought, fullReasoning)
+                  }
+                  // Handle regular text content
+                  else if (part.text) {
+                    // If we had reasoning and now getting content, mark reasoning complete
+                    if (fullReasoning && !reasoningDone && onReasoningComplete) {
+                      onReasoningComplete()
+                      reasoningDone = true
+                    }
                     fullContent += part.text
                     onChunk(part.text, fullContent)
                   }
@@ -131,7 +166,9 @@ export async function sendStreamingMessage({
 
               // Check finish reason
               if (candidate.finishReason && candidate.finishReason !== 'STOP') {
-                console.warn('Gemini finish reason:', candidate.finishReason)
+                if (process.env.NODE_ENV === 'development') {
+                  console.warn('Gemini finish reason:', candidate.finishReason)
+                }
               }
             }
 
@@ -140,29 +177,43 @@ export async function sendStreamingMessage({
               throw new Error(parsed.error.message || 'Unknown error from Gemini')
             }
           } catch (parseError) {
-            console.warn('Failed to parse SSE data:', data, parseError)
+            if (process.env.NODE_ENV === 'development') {
+              console.warn('Failed to parse SSE data:', parseError)
+            }
           }
         }
       }
 
       // Check if stream was aborted after processing this chunk
       if (abortSignal?.aborted) {
-        console.log('Stream aborted - exiting after chunk processing')
         break
       }
     }
 
-    // Call onComplete only once
+    // Finalize reasoning if it exists but wasn't marked complete
+    if (fullReasoning && !reasoningDone && onReasoningComplete) {
+      onReasoningComplete()
+    }
+
+    // Call onComplete callback once
     if (!completeCalled) {
       completeCalled = true
       onComplete(fullContent)
     }
   } catch (error) {
-    // Check if it was aborted
+    // Handle abort signal
     if (error.name === 'AbortError') {
-      console.log('Stream aborted by user')
+      // Save accumulated reasoning before finalizing
+      if (fullReasoning.length > 0 && !reasoningDone) {
+        if (onReasoningChunk) {
+          onReasoningChunk('', fullReasoning)
+        }
+        if (onReasoningComplete) {
+          onReasoningComplete()
+        }
+      }
 
-      // Finalize the message with whatever content we have so far (only if not already called)
+      // Finalize with partial content
       if (!completeCalled) {
         completeCalled = true
         onComplete(fullContent)

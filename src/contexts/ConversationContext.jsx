@@ -353,6 +353,9 @@ export function ConversationProvider({ children }) {
       const updated = {
         ...updatedConversation,
         messages: currentMessages,
+        // Update conversation model/provider when metadata is provided (for retry/regenerate)
+        ...(metadata && metadata.model ? { model: metadata.model } : {}),
+        ...(metadata && metadata.provider ? { provider: metadata.provider } : {}),
         // Only update timestamp when saving immediately (stream complete/abort)
         ...(saveImmediately ? { updatedAt: new Date().toISOString() } : {})
       }

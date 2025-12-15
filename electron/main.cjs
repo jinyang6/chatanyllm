@@ -36,13 +36,15 @@ try {
 const isDev = !app.isPackaged
 
 let mainWindow = null
+let showWindowTimeout = null
 
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
-    minWidth: 900,
+    minWidth: 950,
     minHeight: 600,
+    show: false,  // Don't show until app is ready (prevents blank screen)
     frame: false,  // Remove default title bar
     titleBarStyle: 'hidden',  // Hide title bar on macOS
     backgroundColor: '#F9F9F9',  // Match app background
@@ -58,6 +60,14 @@ function createWindow() {
       ? path.join(__dirname, '../public/icon.ico')
       : path.join(__dirname, '../dist/icon.ico')
   })
+
+  // Show window when renderer signals it's ready, or after timeout as fallback
+  showWindowTimeout = setTimeout(() => {
+    if (mainWindow && !mainWindow.isVisible()) {
+      mainWindow.show()
+      console.log('Window shown after timeout fallback')
+    }
+  }, 3000)
 
   // Load app
   if (isDev) {
@@ -482,6 +492,18 @@ ipcMain.handle('window:isMaximized', () => {
     return mainWindow.isMaximized()
   }
   return false
+})
+
+// App ready signal from renderer - show window when React app is fully loaded
+ipcMain.handle('app:ready', () => {
+  if (showWindowTimeout) {
+    clearTimeout(showWindowTimeout)
+    showWindowTimeout = null
+  }
+  if (mainWindow && !mainWindow.isVisible()) {
+    mainWindow.show()
+    console.log('Window shown after app:ready signal')
+  }
 })
 
 console.log('Electron main process started')

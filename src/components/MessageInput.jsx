@@ -20,8 +20,10 @@ function MessageInput({ onSendMessage, isStreaming = false, onStopGeneration, di
     if (textarea) {
       // Reset height to auto to get the correct scrollHeight
       textarea.style.height = 'auto'
-      // Set height to scrollHeight to fit content
-      textarea.style.height = Math.min(textarea.scrollHeight, 400) + 'px' // Max 400px height
+      // Only expand if there's actual content, otherwise use minimum height
+      if (message.length > 0) {
+        textarea.style.height = Math.min(textarea.scrollHeight, 400) + 'px' // Max 400px height
+      }
     }
   }, [message])
 

@@ -4,20 +4,24 @@
 
 /**
  * Detect if a model is a "thinking" model (has reasoning capabilities)
+ * Uses OpenRouter API metadata to dynamically detect reasoning support.
+ *
  * @param {string} modelId - The model identifier
+ * @param {Array} availableModels - Array of available model configurations from API
  * @returns {boolean} True if model supports reasoning
  */
-export function isThinkingModel(modelId) {
+export function isThinkingModel(modelId, availableModels = []) {
   if (!modelId) return false
-  const lowerModel = modelId.toLowerCase()
-  return (
-    lowerModel.includes('o1') ||
-    lowerModel.includes('o3') ||
-    lowerModel.includes('claude-3.7-sonnet') ||
-    lowerModel.includes('claude-3-7-sonnet') ||
-    lowerModel.includes('gemini-2.0-flash-thinking') ||
-    lowerModel.includes('thinking')
-  )
+
+  // Always check API metadata first - this is the source of truth
+  const modelData = availableModels.find(m => m.id === modelId)
+  if (modelData && modelData.supportsReasoning) {
+    return true
+  }
+
+  // If model is not in the fetched list, we cannot determine if it supports reasoning
+  // Return false to avoid incorrect assumptions
+  return false
 }
 
 /**

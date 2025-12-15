@@ -1,6 +1,7 @@
 /**
  * OpenAI-compatible chat adapter
  * Handles: OpenAI, OpenRouter, and all custom OpenAI-compatible providers
+ * Updated: 2025-01-15
  */
 
 export async function sendStreamingMessage({
@@ -15,7 +16,12 @@ export async function sendStreamingMessage({
   onError,
   abortSignal,
   modalities = null, // For image generation: ['image', 'text']
-  reasoning = null // For thinking models: { effort: 'high' } or { max_tokens: 2000 }
+  reasoning = null, // For thinking models: { effort: 'high' } or { max_tokens: 2000 }
+  temperature = 0.7,
+  maxTokens = null,
+  topP = null,
+  frequencyPenalty = null,
+  presencePenalty = null
 }) {
   let fullContent = ''
   let fullReasoning = ''
@@ -23,12 +29,29 @@ export async function sendStreamingMessage({
   let completeCalled = false
 
   try {
+    // Validate required parameters
+    if (!apiKey || typeof apiKey !== 'string') {
+      throw new Error('Invalid API key')
+    }
+    if (!model || typeof model !== 'string') {
+      throw new Error('Invalid model')
+    }
+    if (!Array.isArray(messages) || messages.length === 0) {
+      throw new Error('Messages must be a non-empty array')
+    }
+
     const requestBody = {
       model,
       messages,
       stream: true,
-      temperature: 0.7
+      temperature
     }
+
+    // Add optional parameters only if specified
+    if (maxTokens) requestBody.max_tokens = maxTokens
+    if (topP !== null) requestBody.top_p = topP
+    if (frequencyPenalty !== null) requestBody.frequency_penalty = frequencyPenalty
+    if (presencePenalty !== null) requestBody.presence_penalty = presencePenalty
 
     // Add modalities for image generation if specified
     if (modalities && Array.isArray(modalities)) {
@@ -38,6 +61,10 @@ export async function sendStreamingMessage({
     // Add reasoning for thinking models if specified
     if (reasoning) {
       requestBody.reasoning = reasoning
+    }
+
+    if (!baseUrl || typeof baseUrl !== 'string') {
+      throw new Error('Invalid base URL')
     }
 
     const response = await fetch(`${baseUrl}/chat/completions`, {
@@ -84,7 +111,6 @@ export async function sendStreamingMessage({
     while (true) {
       // Check if stream was aborted before reading next chunk
       if (abortSignal?.aborted) {
-        console.log('Stream aborted - exiting read loop early')
         break
       }
 
@@ -102,7 +128,7 @@ export async function sendStreamingMessage({
       for (const line of lines) {
         const trimmedLine = line.trim()
 
-        // Skip empty lines and comments
+        // Skip empty lines and SSE comments
         if (!trimmedLine || trimmedLine.startsWith(':')) continue
 
         // SSE format: "data: {json}"
@@ -120,10 +146,28 @@ export async function sendStreamingMessage({
             // Extract content from delta
             const delta = parsed.choices?.[0]?.delta
 
-            // Handle reasoning tokens (thinking)
-            if (delta?.reasoning && onReasoningChunk) {
-              fullReasoning += delta.reasoning
-              onReasoningChunk(delta.reasoning, fullReasoning)
+            // Handle reasoning tokens from multiple possible fields
+            // OpenRouter returns reasoning in delta.reasoning for DeepSeek R1 and similar models
+            let reasoningText = null
+
+            // Check standard reasoning field
+            if (delta?.reasoning) {
+              reasoningText = delta.reasoning
+            }
+            // Check reasoning_details array (alternative structure)
+            else if (delta?.reasoning_details && Array.isArray(delta.reasoning_details)) {
+              const reasoningParts = delta.reasoning_details
+                .filter(part => part.type === 'reasoning.text' && part.text)
+                .map(part => part.text)
+              if (reasoningParts.length > 0) {
+                reasoningText = reasoningParts.join('')
+              }
+            }
+
+            // Process reasoning tokens
+            if (reasoningText && onReasoningChunk) {
+              fullReasoning += reasoningText
+              onReasoningChunk(reasoningText, fullReasoning)
             }
 
             // When content starts, reasoning is complete
@@ -138,10 +182,10 @@ export async function sendStreamingMessage({
               onChunk(delta.content, fullContent)
             }
 
-            // Check for image content in various formats
-            // Some models return images as separate message parts
+            // Handle tool/function calls (for future implementation)
             if (delta?.tool_calls || delta?.function_call) {
-              console.log('Tool/function call detected:', delta)
+              // TODO: Implement proper tool call handling
+              // For now, log and continue
             }
 
             // Check for image_url type content (multimodal responses)
@@ -189,53 +233,48 @@ export async function sendStreamingMessage({
 
             // Check if stream is finished
             if (parsed.choices?.[0]?.finish_reason) {
-              // Stream ended
-              console.log('Stream finished, finish_reason:', parsed.choices[0].finish_reason)
+              // Stream ended normally
               break
             }
           } catch (parseError) {
-            console.warn('Failed to parse SSE data:', data, parseError)
+            // Log parsing errors but continue processing other chunks
+            if (process.env.NODE_ENV === 'development') {
+              console.warn('Failed to parse SSE data:', parseError)
+            }
           }
         }
       }
 
       // Check if stream was aborted after processing this chunk
       if (abortSignal?.aborted) {
-        console.log('Stream aborted - exiting after chunk processing')
         break
       }
     }
 
-    // If we accumulated reasoning but never marked it complete, do so now
+    // Finalize reasoning if it exists but wasn't marked complete
     if (fullReasoning && !reasoningDone && onReasoningComplete) {
       onReasoningComplete()
     }
 
-    // Call onComplete only once
+    // Call onComplete callback once
     if (!completeCalled) {
       completeCalled = true
       onComplete(fullContent)
     }
   } catch (error) {
-    // Check if it was aborted
+    // Handle abort signal
     if (error.name === 'AbortError') {
-      console.log('Stream aborted by user')
-      console.log('Abort cleanup - fullReasoning length:', fullReasoning.length, 'reasoningDone:', reasoningDone)
-
-      // Cleanup: save and mark reasoning complete if it exists but wasn't marked
+      // Save accumulated reasoning before finalizing
       if (fullReasoning.length > 0 && !reasoningDone) {
-        console.log('Saving reasoning on abort:', fullReasoning.substring(0, 100))
-        // Save the accumulated reasoning first
         if (onReasoningChunk) {
           onReasoningChunk('', fullReasoning)
         }
-        // Then mark it as complete
         if (onReasoningComplete) {
           onReasoningComplete()
         }
       }
 
-      // Finalize the message with whatever content we have so far (only if not already called)
+      // Finalize with partial content
       if (!completeCalled) {
         completeCalled = true
         onComplete(fullContent)
