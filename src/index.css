@@ -20,6 +20,9 @@ body {
 #root {
   width: 100vw;
   height: 100vh;
+  /* Performance optimization for smoother window resize */
+  contain: layout style paint;
+  will-change: transform;
 }
 
 /* Window drag regions for custom title bar (Electron) */

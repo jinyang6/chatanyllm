@@ -39,7 +39,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
     minimize: () => ipcRenderer.invoke('window:minimize'),
     maximize: () => ipcRenderer.invoke('window:maximize'),
     close: () => ipcRenderer.invoke('window:close'),
-    isMaximized: () => ipcRenderer.invoke('window:isMaximized')
+    isMaximized: () => ipcRenderer.invoke('window:isMaximized'),
+    onStateChange: (callback) => {
+      const subscription = (event, isMaximized) => callback(isMaximized)
+      ipcRenderer.on('window-state-changed', subscription)
+      // Return cleanup function
+      return () => ipcRenderer.removeListener('window-state-changed', subscription)
+    }
   },
 
   // App info
@@ -50,7 +56,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Platform info
   platform: process.platform,
-  isElectron: true
+  isElectron: true,
+
+  // OS version detection for conditional UI rendering
+  isWindows11: () => {
+    if (process.platform !== 'win32') return false
+    const os = require('os')
+    const buildNumber = parseInt(os.release().split('.')[2] || '0')
+    return buildNumber >= 22000
+  }
 })
 
 console.log('Electron preload script loaded')
