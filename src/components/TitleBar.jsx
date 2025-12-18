@@ -4,12 +4,36 @@ import iconSvg from '/icon.svg'
 
 function TitleBar() {
   const [isMaximized, setIsMaximized] = useState(false)
+  const [shouldRenderCustom, setShouldRenderCustom] = useState(true)
 
   useEffect(() => {
     // Check if running in Electron
     if (window.electronAPI) {
-      // Get initial maximized state
-      window.electronAPI.window.isMaximized().then(setIsMaximized)
+      const checkPlatform = async () => {
+        const platform = window.electronAPI.platform
+
+        if (platform === 'darwin') {
+          // macOS uses native traffic lights
+          setShouldRenderCustom(false)
+          return
+        }
+
+        // Windows and Linux use custom titlebar (like VS Code)
+        setShouldRenderCustom(true)
+
+        // Get initial maximized state
+        const maximized = await window.electronAPI.window.isMaximized()
+        setIsMaximized(maximized)
+      }
+
+      checkPlatform()
+
+      // Subscribe to window state changes
+      const cleanup = window.electronAPI.window.onStateChange((maximized) => {
+        setIsMaximized(maximized)
+      })
+
+      return cleanup
     }
   }, [])
 
@@ -19,11 +43,12 @@ function TitleBar() {
     }
   }
 
-  const handleMaximize = () => {
+  const handleMaximize = async () => {
     if (window.electronAPI) {
-      window.electronAPI.window.maximize()
-      // Toggle state
-      setIsMaximized(!isMaximized)
+      await window.electronAPI.window.maximize()
+      // Verify actual state after action
+      const actualState = await window.electronAPI.window.isMaximized()
+      setIsMaximized(actualState)
     }
   }
 
@@ -33,11 +58,12 @@ function TitleBar() {
     }
   }
 
-  // Only render in Electron
-  if (!window.electronAPI) {
+  // Only render custom titlebar in Electron (not on macOS with native traffic lights)
+  if (!window.electronAPI || !shouldRenderCustom) {
     return null
   }
 
+  // Windows and Linux: Full custom titlebar with controls (VS Code approach)
   return (
     <div className="h-8 bg-background flex items-center justify-between select-none titlebar-drag">
       {/* App Icon */}

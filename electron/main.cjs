@@ -38,28 +38,79 @@ const isDev = !app.isPackaged
 let mainWindow = null
 let showWindowTimeout = null
 
+// Detect Windows version for smart titlebar configuration
+function isWindows11() {
+  if (process.platform !== 'win32') return false
+
+  const osRelease = require('os').release()
+  const buildNumber = parseInt(osRelease.split('.')[2] || '0')
+
+  // Windows 11 starts at build 22000
+  return buildNumber >= 22000
+}
+
 function createWindow() {
-  mainWindow = new BrowserWindow({
+  // Base window configuration
+  const windowConfig = {
     width: 1200,
     height: 800,
     minWidth: 950,
     minHeight: 600,
     show: false,  // Don't show until app is ready (prevents blank screen)
-    frame: false,  // Remove default title bar
-    titleBarStyle: 'hidden',  // Hide title bar on macOS
     backgroundColor: '#F9F9F9',  // Match app background
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: false,
-      webSecurity: false  // Disable CORS for custom API providers
+      webSecurity: false,  // Disable CORS for custom API providers
+      enableBlinkFeatures: 'OverlayScrollbars',  // Better scrollbar performance
+      // VS Code performance optimizations
+      v8CacheOptions: isDev ? 'none' : 'bypassHeatCheck',  // Code caching for faster startup
+      spellcheck: false  // Disable spellcheck for better performance
     },
     autoHideMenuBar: true,
-    icon: isDev
-      ? path.join(__dirname, '../public/icon.ico')
-      : path.join(__dirname, '../dist/icon.ico')
-  })
+    icon: path.join(__dirname, isDev ? '../public/icon.ico' : '../dist/icon.ico')
+  }
+
+  // Platform-specific titlebar configuration
+  if (process.platform === 'win32') {
+    // Windows: Always use custom titlebar for better control and performance
+    // This approach is used by VS Code and provides consistent experience
+    windowConfig.frame = false
+    windowConfig.titleBarStyle = 'hidden'
+
+    // Windows-specific optimizations for smoother resize animations
+    windowConfig.transparent = false  // Opaque windows perform better
+    windowConfig.hasShadow = true  // Native shadow for better integration
+
+    if (isWindows11()) {
+      console.log('✓ Windows 11 detected - using optimized custom titlebar')
+    } else {
+      console.log('✓ Windows 10 detected - using custom titlebar')
+    }
+  } else if (process.platform === 'darwin') {
+    // macOS: Native traffic lights with hidden titlebar
+    windowConfig.titleBarStyle = 'hiddenInset'
+    windowConfig.trafficLightPosition = { x: 10, y: 10 }
+    console.log('✓ macOS detected - using native traffic lights')
+  } else {
+    // Linux: Custom titlebar
+    windowConfig.frame = false
+    console.log('✓ Linux detected - using custom titlebar')
+  }
+
+  mainWindow = new BrowserWindow(windowConfig)
+
+  // Disable the resize overlay that shows window dimensions
+  if (process.platform === 'win32') {
+    try {
+      mainWindow.setAutoHideMenuBar(true)
+      mainWindow.setMenuBarVisibility(false)
+    } catch (e) {
+      console.warn('Could not hide menu bar:', e.message)
+    }
+  }
 
   // Show window when renderer signals it's ready, or after timeout as fallback
   showWindowTimeout = setTimeout(() => {
@@ -103,12 +154,47 @@ function createWindow() {
     }
   })
 
+  // Send window state changes to renderer for custom titlebar sync
+  mainWindow.on('maximize', () => {
+    if (mainWindow) {
+      mainWindow.webContents.send('window-state-changed', true)
+    }
+  })
+
+  mainWindow.on('unmaximize', () => {
+    if (mainWindow) {
+      mainWindow.webContents.send('window-state-changed', false)
+    }
+  })
+
   mainWindow.on('closed', () => {
     mainWindow = null
   })
 }
 
+// Apply VS Code performance optimizations
+// Disable native window occlusion tracker for better animation performance
+app.commandLine.appendSwitch('disable-features', 'CalculateNativeWinOcclusion')
+
+// Additional performance optimizations for smoother animations
+if (process.platform === 'win32') {
+  // Enable hardware acceleration features
+  app.commandLine.appendSwitch('enable-features', 'VaapiVideoDecoder')
+  // Improve GPU performance
+  app.commandLine.appendSwitch('enable-gpu-rasterization')
+  app.commandLine.appendSwitch('enable-zero-copy')
+}
+
 app.whenReady().then(() => {
+  // Set app icon for Windows taskbar
+  if (process.platform === 'win32') {
+    const iconPath = isDev
+      ? path.join(__dirname, '../public/icon.ico')
+      : path.join(__dirname, '../dist/icon.ico')
+    app.setAppUserModelId('com.chatanyllm.app')
+    console.log('App icon path:', iconPath)
+  }
+
   createWindow()
 
   app.on('activate', () => {
