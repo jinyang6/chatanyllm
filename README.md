@@ -18,7 +18,7 @@ A desktop chat application for interacting with multiple AI language models thro
 
 ### Download
 Download the latest installer from [Releases](../../releases):
-- **Windows**: `ChatAnyLLM-Setup-1.0.0.exe`
+- **Windows**: `ChatAnyLLM-Setup.exe`
 
 ### Install
 1. Run the installer
