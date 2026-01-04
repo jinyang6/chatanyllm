@@ -2,6 +2,8 @@
 
 A desktop chat application for interacting with multiple AI language models through a unified interface.
 
+🌐 **[Visit Website](https://jinyang6.github.io/chatanyllm/)**
+
 <p align="center">
   <img src="assets/screenshots/hero.png" alt="ChatAnyLLM" style="border-radius: 8px;" />
 </p>
@@ -17,7 +19,7 @@ A desktop chat application for interacting with multiple AI language models thro
 ## Installation
 
 ### Download
-Download the latest installer from [Releases](../../releases):
+Download the latest installer from [Releases](../../releases) or visit our [website](https://jinyang6.github.io/chatanyllm/):
 - **Windows**: `ChatAnyLLM-Setup.exe`
 
 ### Install
