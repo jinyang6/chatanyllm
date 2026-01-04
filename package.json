@@ -2,6 +2,7 @@
   "name": "chatanyllm",
   "version": "1.0.2",
   "description": "Chat with multiple LLM providers",
+  "homepage": "https://jinyang6.github.io/chatanyllm/",
   "main": "electron/main.cjs",
   "type": "module",
   "scripts": {
