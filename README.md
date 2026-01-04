@@ -2,7 +2,7 @@
 
 A desktop chat application for interacting with multiple AI language models through a unified interface.
 
-🌐 **[Visit Website](https://jinyang6.github.io/chatanyllm/)**
+**[Visit Website](https://jinyang6.github.io/chatanyllm/)**
 
 <p align="center">
   <img src="assets/screenshots/hero.png" alt="ChatAnyLLM" style="border-radius: 8px;" />
