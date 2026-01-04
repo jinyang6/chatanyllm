@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Primary Meta Tags -->
+  <title>ChatAnyLLM - Universal LLM Client for Custom Endpoints & Local Models</title>
+  <meta name="title" content="ChatAnyLLM - Universal LLM Client for Custom Endpoints & Local Models">
+  <meta name="description" content="Desktop chat application supporting custom endpoints, local models (Ollama), OpenAI, Anthropic, Google, and OpenRouter. One interface for engineers managing multiple API keys.">
+  <meta name="keywords" content="AI chat, LLM client, ChatGPT, Claude, Gemini, OpenRouter, Ollama, local LLM, custom API, desktop app, electron, open source">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://jinyang6.github.io/chatanyllm/">
+  <meta property="og:title" content="ChatAnyLLM - Universal LLM Client">
+  <meta property="og:description" content="One interface for all your LLMs. Custom endpoints, local models (Ollama), and all major providers.">
+  <meta property="og:image" content="https://jinyang6.github.io/chatanyllm/assets/og-image.png">
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://jinyang6.github.io/chatanyllm/">
+  <meta property="twitter:title" content="ChatAnyLLM - Universal LLM Client">
+  <meta property="twitter:description" content="One interface for all your LLMs. Custom endpoints, local models (Ollama), and all major providers.">
+  <meta property="twitter:image" content="https://jinyang6.github.io/chatanyllm/assets/og-image.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="assets/icon.png">
+  <link rel="apple-touch-icon" href="assets/icon.png">
+  <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="nav">
+    <div class="container">
+      <div class="nav-content">
+        <div class="nav-logo">
+          <img src="assets/icon.svg" alt="ChatAnyLLM Logo" class="logo-icon">
+          <span class="logo-text">ChatAnyLLM</span>
+        </div>
+        <div class="nav-links">
+          <a href="#features" class="nav-link">Features</a>
+          <a href="#download" class="nav-link">Download</a>
+          <a href="https://github.com/jinyang6/chatanyllm" class="nav-link" target="_blank" rel="noopener noreferrer">GitHub</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section id="hero" class="hero">
+    <div class="container">
+      <div class="hero-content">
+        <!-- Badge -->
+        <div class="badge">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+            <polyline points="9 22 9 12 15 12 15 22"/>
+          </svg>
+          <span class="badge-text">Free & Open Source</span>
+        </div>
+
+        <!-- Headline -->
+        <h1 class="hero-title">Chat with Any AI Model</h1>
+
+        <!-- Tagline -->
+        <p class="hero-tagline">
+          Universal LLM client for custom endpoints, local models, and all major providers.<br>
+          Built for engineers managing their own infrastructure.
+        </p>
+
+        <!-- CTA Buttons -->
+        <div class="hero-buttons">
+          <a href="#download" class="btn btn-primary">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Download for Windows
+          </a>
+          <a href="https://github.com/jinyang6/chatanyllm" class="btn btn-outline" target="_blank" rel="noopener noreferrer">
+            View on GitHub
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M5 12h14"></path>
+              <path d="m12 5 7 7-7 7"></path>
+            </svg>
+          </a>
+        </div>
+
+        <!-- Provider Partners -->
+        <div class="hero-providers">
+          <p class="providers-label">Integrated Providers</p>
+          <div class="provider-partners">
+            <div class="partner-logo partner-openrouter">
+              <div class="partner-circle">
+                <svg width="32" height="32" viewBox="0 0 512 512" fill="currentColor" stroke="currentColor">
+                  <g>
+                    <path d="M3 248.945C18 248.945 76 236 106 219C136 202 136 202 198 158C276.497 102.293 332 120.945 423 120.945" stroke-width="90" fill="none"/>
+                    <path d="M511 121.5L357.25 210.268L357.25 32.7324L511 121.5Z"/>
+                    <path d="M0 249C15 249 73 261.945 103 278.945C133 295.945 133 295.945 195 339.945C273.497 395.652 329 377 420 377" stroke-width="90" fill="none"/>
+                    <path d="M508 376.445L354.25 287.678L354.25 465.213L508 376.445Z"/>
+                  </g>
+                </svg>
+              </div>
+              <span class="partner-name">OpenRouter</span>
+            </div>
+            <div class="partner-logo partner-openai">
+              <div class="partner-circle">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.872zm16.5963 3.8558L13.1038 8.364 15.1192 7.2a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z"/>
+                </svg>
+              </div>
+              <span class="partner-name">OpenAI</span>
+            </div>
+            <div class="partner-logo partner-gemini">
+              <div class="partner-circle">
+                <svg width="32" height="32" viewBox="0 0 65 65" fill="none">
+                  <defs>
+                    <linearGradient id="gemini-gradient" x1="18.447" y1="43.42" x2="52.153" y2="15.004" gradientUnits="userSpaceOnUse">
+                      <stop stop-color="#4893FC"/>
+                      <stop offset=".27" stop-color="#4893FC"/>
+                      <stop offset=".777" stop-color="#969DFF"/>
+                      <stop offset="1" stop-color="#BD99FE"/>
+                    </linearGradient>
+                  </defs>
+                  <path d="M32.447 0c.68 0 1.273.465 1.439 1.125a38.904 38.904 0 001.999 5.905c2.152 5 5.105 9.376 8.854 13.125 3.751 3.75 8.126 6.703 13.125 8.855a38.98 38.98 0 005.906 1.999c.66.166 1.124.758 1.124 1.438 0 .68-.464 1.273-1.125 1.439a38.902 38.902 0 00-5.905 1.999c-5 2.152-9.375 5.105-13.125 8.854-3.749 3.751-6.702 8.126-8.854 13.125a38.973 38.973 0 00-2 5.906 1.485 1.485 0 01-1.438 1.124c-.68 0-1.272-.464-1.438-1.125a38.913 38.913 0 00-2-5.905c-2.151-5-5.103-9.375-8.854-13.125-3.75-3.749-8.125-6.702-13.125-8.854a38.973 38.973 0 00-5.905-2A1.485 1.485 0 010 32.448c0-.68.465-1.272 1.125-1.438a38.903 38.903 0 005.905-2c5-2.151 9.376-5.104 13.125-8.854 3.75-3.749 6.703-8.125 8.855-13.125a38.972 38.972 0 001.999-5.905A1.485 1.485 0 0132.447 0z" fill="url(#gemini-gradient)"/>
+                </svg>
+              </div>
+              <span class="partner-name">Gemini</span>
+            </div>
+            <div class="partner-logo partner-claude">
+              <div class="partner-circle">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M4.709 15.955l4.72-2.647.08-.23-.08-.128H9.2l-.79-.048-2.698-.073-2.339-.097-2.266-.122-.571-.121L0 11.784l.055-.352.48-.321.686.06 1.52.103 2.278.158 1.652.097 2.449.255h.389l.055-.157-.134-.098-.103-.097-2.358-1.596-2.552-1.688-1.336-.972-.724-.491-.364-.462-.158-1.008.656-.722.881.06.225.061.893.686 1.908 1.476 2.491 1.833.365.304.145-.103.019-.073-.164-.274-1.355-2.446-1.446-2.49-.644-1.032-.17-.619a2.97 2.97 0 01-.104-.729L6.283.134 6.696 0l.996.134.42.364.62 1.414 1.002 2.229 1.555 3.03.456.898.243.832.091.255h.158V9.01l.128-1.706.237-2.095.23-2.695.08-.76.376-.91.747-.492.584.28.48.685-.067.444-.286 1.851-.559 2.903-.364 1.942h.212l.243-.242.985-1.306 1.652-2.064.73-.82.85-.904.547-.431h1.033l.76 1.129-.34 1.166-1.064 1.347-.881 1.142-1.264 1.7-.79 1.36.073.11.188-.02 2.856-.606 1.543-.28 1.841-.315.833.388.091.395-.328.807-1.969.486-2.309.462-3.439.813-.042.03.049.061 1.549.146.662.036h1.622l3.02.225.79.522.474.638-.079.485-1.215.62-1.64-.389-3.829-.91-1.312-.329h-.182v.11l1.093 1.068 2.006 1.81 2.509 2.33.127.578-.322.455-.34-.049-2.205-1.657-.851-.747-1.926-1.62h-.128v.17l.444.649 2.345 3.521.122 1.08-.17.353-.608.213-.668-.122-1.374-1.925-1.415-2.167-1.143-1.943-.14.08-.674 7.254-.316.37-.729.28-.607-.461-.322-.747.322-1.476.389-1.924.315-1.53.286-1.9.17-.632-.012-.042-.14.018-1.434 1.967-2.18 2.945-1.726 1.845-.414.164-.717-.37.067-.662.401-.589 2.388-3.036 1.44-1.882.93-1.086-.006-.158h-.055L4.132 18.56l-1.13.146-.487-.456.061-.746.231-.243 1.908-1.312-.006.006z"/>
+                </svg>
+              </div>
+              <span class="partner-name">Claude</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- App Preview Section -->
+  <section id="preview" class="preview">
+    <div class="container">
+      <div class="app-window">
+        <!-- Fake Titlebar -->
+        <div class="titlebar">
+          <img src="assets/icon.svg" alt="" class="titlebar-icon">
+          <div class="window-controls">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        </div>
+
+        <!-- Fake App Layout -->
+        <div class="app-layout">
+          <!-- Sidebar -->
+          <aside class="sidebar">
+            <div class="sidebar-header">
+              <button class="new-conversation-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M5 12h14"/>
+                  <path d="M12 5v14"/>
+                </svg>
+                <span>New Conversation</span>
+              </button>
+            </div>
+
+            <div class="conversation-list">
+              <div class="conversation conversation-active">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+                <div class="conversation-content">
+                  <div class="conversation-title">Solving calculus integrals</div>
+                  <div class="conversation-time">Today</div>
+                </div>
+              </div>
+
+              <div class="conversation">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+                <div class="conversation-content">
+                  <div class="conversation-title">React best practices</div>
+                  <div class="conversation-time">Yesterday</div>
+                </div>
+              </div>
+
+              <div class="conversation">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+                <div class="conversation-content">
+                  <div class="conversation-title">API integration help</div>
+                  <div class="conversation-time">2 days ago</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="sidebar-footer">
+              <button class="settings-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+                <span>Settings</span>
+              </button>
+            </div>
+          </aside>
+
+          <!-- Chat Window -->
+          <main class="chat-window">
+            <div class="chat-header">
+              <button class="sidebar-toggle">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect width="18" height="18" x="3" y="3" rx="2"/>
+                  <path d="M9 3v18"/>
+                  <path d="m14 9-3 3 3 3"/>
+                </svg>
+              </button>
+              <div class="provider-badges">
+                <span class="provider-label">Provider</span>
+                <span class="provider-value">OpenRouter</span>
+                <div class="divider"></div>
+                <span class="model-label">Model</span>
+                <span class="model-value">claude-3.5-sonnet</span>
+              </div>
+            </div>
+
+            <div class="chat-messages">
+              <!-- User Message -->
+              <div class="message message-user">
+                <div class="avatar avatar-user">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                  </svg>
+                </div>
+                <div class="message-content">
+                  Can you solve the integral of x times e to the power of x?
+                </div>
+              </div>
+
+              <!-- Assistant Message -->
+              <div class="message message-assistant">
+                <div class="avatar avatar-assistant">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 8V4H8"/>
+                    <rect width="16" height="12" x="4" y="8" rx="2"/>
+                    <path d="M2 12h2"/>
+                    <path d="M20 12h2"/>
+                    <path d="M15 13v2"/>
+                    <path d="M9 13v2"/>
+                  </svg>
+                </div>
+                <div class="message-content">
+                  <p>I can help you solve that integral. Using integration by parts:</p>
+                  <div class="latex-block">
+                    <div class="latex-content">
+                      ∫ x·e<sup>x</sup> dx = x·e<sup>x</sup> - ∫ e<sup>x</sup> dx = x·e<sup>x</sup> - e<sup>x</sup> + C
+                    </div>
+                  </div>
+                  <p>The quadratic formula for solving ax² + bx + c = 0:</p>
+                  <div class="latex-block">
+                    <div class="latex-content">
+                      x = <span class="fraction"><span class="numerator">-b ± √(b² - 4ac)</span><span class="denominator">2a</span></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="chat-input">
+              <div class="input-wrapper">
+                <button class="attach-button">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                  </svg>
+                </button>
+                <span class="input-placeholder">Type your message...</span>
+                <button class="send-button">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="m5 12 7-7 7 7"/>
+                    <path d="M12 19V5"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </main>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section id="features" class="features">
+    <div class="container">
+      <div class="features-header">
+        <h2 class="section-title">Key Features</h2>
+        <p class="section-description">
+          Everything you need for productive AI conversations
+        </p>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+            </svg>
+          </div>
+          <h3 class="feature-title">Custom Endpoints</h3>
+          <p class="feature-description">
+            Add any OpenAI-compatible API, including local models via Ollama
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+          </div>
+          <h3 class="feature-title">Local & Secure</h3>
+          <p class="feature-description">
+            All conversations stored locally, API keys encrypted with Windows DPAPI
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="16 18 22 12 16 6"></polyline>
+              <polyline points="8 6 2 12 8 18"></polyline>
+            </svg>
+          </div>
+          <h3 class="feature-title">Rich Formatting</h3>
+          <p class="feature-description">
+            Markdown, code syntax highlighting, and LaTeX math rendering
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect>
+              <circle cx="9" cy="9" r="2"></circle>
+              <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path>
+            </svg>
+          </div>
+          <h3 class="feature-title">Vision Support</h3>
+          <p class="feature-description">
+            Paste and preview images in conversations with vision-capable models
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Download Section -->
+  <section id="download" class="download">
+    <div class="container-narrow">
+      <div class="download-content">
+        <h2 class="section-title">Download ChatAnyLLM</h2>
+        <p class="section-description">
+          Free and open source. Available for Windows.
+        </p>
+
+        <div class="download-card" id="download-card">
+          <div id="download-loading" class="download-loading">
+            <div class="spinner"></div>
+            <p>Loading latest release...</p>
+          </div>
+
+          <div id="download-content" class="download-ready" style="display: none;">
+            <div class="version-badge" id="version-badge">
+              <span id="version-text"></span>
+              <span id="release-date"></span>
+            </div>
+
+            <a href="#" id="download-button" class="btn btn-primary btn-large">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              Download ChatAnyLLM-Setup.exe
+            </a>
+
+            <a href="#" id="release-notes-link" class="btn btn-outline btn-large">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                <polyline points="15 3 21 3 21 9"></polyline>
+                <line x1="10" y1="14" x2="21" y2="3"></line>
+              </svg>
+              View Release Notes
+            </a>
+
+            <div class="download-stats" id="download-stats"></div>
+
+            <div class="system-requirements">
+              <p class="requirements-title">System Requirements</p>
+              <ul class="requirements-list">
+                <li>Windows 10 or later (64-bit)</li>
+                <li>~100MB disk space</li>
+                <li>API key from supported provider</li>
+              </ul>
+            </div>
+          </div>
+
+          <div id="download-error" class="download-error" style="display: none;">
+            <p>Unable to fetch latest release automatically.</p>
+            <a href="https://github.com/jinyang6/chatanyllm/releases" class="btn btn-outline">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+              </svg>
+              View All Releases
+            </a>
+          </div>
+        </div>
+
+        <div class="all-releases-link">
+          <a href="https://github.com/jinyang6/chatanyllm/releases" target="_blank" rel="noopener noreferrer">
+            View all releases
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <line x1="10" y1="14" x2="21" y2="3"></line>
+            </svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <p class="footer-copyright">MIT License © 2026 ChatAnyLLM</p>
+        <div class="footer-links">
+          <a href="https://github.com/jinyang6/chatanyllm" target="_blank" rel="noopener noreferrer">GitHub</a>
+          <a href="https://github.com/jinyang6/chatanyllm/issues" target="_blank" rel="noopener noreferrer">Issues</a>
+          <a href="https://github.com/jinyang6/chatanyllm/releases" target="_blank" rel="noopener noreferrer">Releases</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
