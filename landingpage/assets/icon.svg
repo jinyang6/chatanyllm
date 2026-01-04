@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="5"/>
+      <feOffset dx="0" dy="2" result="offsetblur"/>
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.2"/>
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Main Container: Pleasant Dark Background -->
+  <rect x="32" y="32" width="448" height="448" rx="112" fill="#1E1E1E" />
+  
+  <!-- Chat Bubble / Page Shape: Pleasant White -->
+  <g transform="translate(0, -10)" filter="url(#softGlow)">
+    <!-- Main bubble body -->
+    <rect x="112" y="128" width="320" height="256" rx="40" fill="#F9F9F9" />
+    <!-- Tail of the bubble -->
+    <path d="M160 384 L 112 432 V 350" fill="#F9F9F9" />
+  </g>
+
+  <!-- Content Lines (The "Reading" Aspect): Dark Grey for contrast on white -->
+  <g stroke="#1E1E1E" stroke-width="24" stroke-linecap="round" transform="translate(0, -10)">
+    <line x1="176" y1="208" x2="368" y2="208" />
+    <line x1="176" y1="272" x2="368" y2="272" />
+    <line x1="176" y1="336" x2="280" y2="336" />
+  </g>
+
+  <!-- The AI Sparkle (The "Magic" Aspect): Inverted Dark for style -->
+  <path d="M360 336 L 372 312 L 396 300 L 372 288 L 360 264 L 348 288 L 324 300 L 348 312 Z" fill="#1E1E1E" transform="translate(0, -10)" />
+</svg>
