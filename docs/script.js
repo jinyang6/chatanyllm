@@ -4,6 +4,7 @@
 
 const GITHUB_REPO = 'jinyang6/chatanyllm';
 const GITHUB_API_URL = `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`;
+const GITHUB_ALL_RELEASES_URL = `https://api.github.com/repos/${GITHUB_REPO}/releases`;
 
 // DOM Elements
 const downloadCard = document.getElementById('download-card');
@@ -17,16 +18,46 @@ const downloadButton = document.getElementById('download-button');
 const releaseNotesLink = document.getElementById('release-notes-link');
 const downloadStats = document.getElementById('download-stats');
 
-// Fetch latest release from GitHub API
-async function fetchLatestRelease() {
+// Fetch total downloads across all releases
+async function fetchTotalDownloads() {
   try {
-    const response = await fetch(GITHUB_API_URL);
+    const response = await fetch(GITHUB_ALL_RELEASES_URL);
 
     if (!response.ok) {
       throw new Error(`GitHub API error: ${response.status}`);
     }
 
-    const data = await response.json();
+    const releases = await response.json();
+
+    // Sum downloads across all releases
+    let totalDownloads = 0;
+    releases.forEach(release => {
+      release.assets.forEach(asset => {
+        totalDownloads += asset.download_count;
+      });
+    });
+
+    return totalDownloads;
+  } catch (error) {
+    console.error('Error fetching total downloads:', error);
+    return 0;
+  }
+}
+
+// Fetch latest release from GitHub API
+async function fetchLatestRelease() {
+  try {
+    // Fetch both latest release and total downloads in parallel
+    const [releaseResponse, totalDownloads] = await Promise.all([
+      fetch(GITHUB_API_URL),
+      fetchTotalDownloads()
+    ]);
+
+    if (!releaseResponse.ok) {
+      throw new Error(`GitHub API error: ${releaseResponse.status}`);
+    }
+
+    const data = await releaseResponse.json();
 
     // Find the Windows installer (.exe) asset
     const exeAsset = data.assets.find(asset =>
@@ -41,7 +72,7 @@ async function fetchLatestRelease() {
     updateDownloadSection({
       version: data.tag_name,
       downloadUrl: exeAsset.browser_download_url,
-      downloadCount: exeAsset.download_count,
+      downloadCount: totalDownloads,
       releaseUrl: data.html_url,
       publishedAt: new Date(data.published_at),
       assetName: exeAsset.name
