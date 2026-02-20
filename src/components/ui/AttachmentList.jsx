@@ -23,14 +23,14 @@ export const AttachmentList = memo(({ attachments, onRemove, onPreview, compact 
           {attachments.map((attachment, index) => (
             <div
               key={attachment.id ?? index}
-              className="rounded-full px-3 py-1 flex items-center gap-2 bg-muted/60 border border-border flex-shrink-0"
+              className={`rounded-full px-3 py-1 flex items-center gap-2 bg-muted/60 border border-border flex-shrink-0 transition-colors ${attachment.isImage ? 'cursor-pointer hover:bg-muted' : ''}`}
+              onClick={() => attachment.isImage && onPreview?.({ url: attachment.data, name: attachment.name })}
             >
               {attachment.isImage ? (
                 <img
                   src={attachment.data}
                   alt={attachment.name}
-                  className="h-5 w-5 object-cover rounded cursor-pointer hover:opacity-90"
-                  onClick={() => onPreview?.({ url: attachment.data, name: attachment.name })}
+                  className="h-5 w-5 object-cover rounded"
                 />
               ) : (
                 <FileIcon className="h-5 w-5 text-muted-foreground flex-shrink-0" />

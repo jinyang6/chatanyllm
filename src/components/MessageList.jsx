@@ -355,7 +355,10 @@ const MessageItem = memo(({
               <div className="relative">
                 <div className={`relative ${isCollapsed ? 'max-h-[120px] overflow-hidden' : ''}`}>
                   <div className="prose prose-lg max-w-none break-words prose-ul:list-disc prose-ol:list-decimal prose-li:marker:text-gray-900 dark:prose-li:marker:text-gray-100 prose-p:text-gray-900 dark:prose-p:text-gray-100">
-                    <MemoizedMarkdownContent content={cleanContent} onImageClick={onSetPreviewImage} />
+                    <MemoizedMarkdownContent
+                      content={message.role === 'user' ? cleanContent.replace(/\n/g, '\n\n') : cleanContent}
+                      onImageClick={onSetPreviewImage}
+                    />
                   </div>
                   {generatedImages.length > 0 && (
                     <div className="mt-4 space-y-3">
@@ -379,7 +382,7 @@ const MessageItem = memo(({
                     </div>
                   )}
                   {isCollapsed && (
-                    <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background/95 via-background/40 to-transparent pointer-events-none" />
+                    <div className={`absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t pointer-events-none ${message.role === 'user' ? 'from-muted/95 via-muted/40' : 'from-background/95 via-background/40'} to-transparent`} />
                   )}
                 </div>
               </div>

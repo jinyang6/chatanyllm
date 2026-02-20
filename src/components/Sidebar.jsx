@@ -145,7 +145,7 @@ function Sidebar({ isOpen, currentConversation, onSelectConversation, onOpenSett
                     flex items-center gap-3 w-full rounded-md py-4 pl-4 pr-2
                     cursor-pointer transition-colors
                     ${currentConversationId === conv.id
-                      ? 'bg-secondary text-secondary-foreground'
+                      ? 'bg-accent text-secondary-foreground'
                       : 'hover:bg-accent hover:text-accent-foreground'}
                   `}
                 >
