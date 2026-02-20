@@ -1,10 +1,9 @@
 import { useState, useRef, useEffect } from 'react'
-import { ArrowUp as ArrowUpIcon, CircleStop as StopIcon, Paperclip as PaperclipIcon, X as XIcon, FileText as FileIcon, Image as ImageIcon } from 'lucide-react'
+import { ArrowUp as ArrowUpIcon, CircleStop as StopIcon, Paperclip as PaperclipIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
-import { formatFileSize } from '@/utils/messageFormatters'
+import { AttachmentList } from '@/components/ui/AttachmentList'
 import { convertImageToPNG, calculateBase64Size } from '@/utils/imageConverter'
 import { toast } from 'sonner'
 
@@ -171,44 +170,10 @@ function MessageInput({ onSendMessage, isStreaming = false, onStopGeneration, di
       <div className="max-w-4xl mx-auto px-6 py-4">
         <form onSubmit={handleSubmit} className="relative">
           {/* Attachments Preview */}
-          {attachments.length > 0 && (
-            <ScrollArea className="mb-3 w-full">
-              <div className="flex flex-nowrap gap-2 pb-5 pt-2">
-                {attachments.map((attachment) => (
-                  <div
-                    key={attachment.id}
-                    className="relative group bg-muted rounded-lg p-2 flex items-center gap-2 min-w-[200px] max-w-[200px] flex-shrink-0"
-                  >
-                    {attachment.isImage ? (
-                      <div className="relative">
-                        <img
-                          src={attachment.data}
-                          alt={attachment.name}
-                          className="h-12 w-12 object-cover rounded"
-                        />
-                      </div>
-                    ) : (
-                      <FileIcon className="h-6 w-6 text-muted-foreground flex-shrink-0" />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium truncate">{attachment.name}</p>
-                      <p className="text-xs text-muted-foreground">{formatFileSize(attachment.size)}</p>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-5 w-5 absolute -top-1.5 -right-1.5 bg-background border shadow-sm opacity-0 group-hover:opacity-100 transition-opacity rounded-full"
-                      onClick={() => handleRemoveAttachment(attachment.id)}
-                    >
-                      <XIcon className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-              <ScrollBar orientation="horizontal" />
-            </ScrollArea>
-          )}
+          <AttachmentList
+            attachments={attachments}
+            onRemove={handleRemoveAttachment}
+          />
 
           <div className="relative flex items-center gap-2 rounded-xl border-2 bg-background shadow-md transition-all focus-within:border-ring focus-within:shadow-lg p-3">
             {/* Hidden File Input */}

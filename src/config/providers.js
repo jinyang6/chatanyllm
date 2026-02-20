@@ -8,8 +8,14 @@ export const PROVIDERS = [
     apiKeyUrl: 'https://openrouter.ai/keys',
     apiBaseUrl: 'https://openrouter.ai/api/v1',
     modelsEndpoint: '/models',
+    chatEndpoint: '/chat/completions',
+    testEndpoint: '/auth/key',
     authHeaderKey: 'Authorization',
     authHeaderValue: 'Bearer {key}',
+    extraHeaders: {
+      'X-Title': 'ChatAnyLLM'
+      // 'HTTP-Referer' is set dynamically at runtime using window.location.origin
+    },
     supportsDynamicFetch: true,
     requiresApiKey: true,
     fallbackModels: [
@@ -36,6 +42,7 @@ export const PROVIDERS = [
     apiKeyUrl: 'https://platform.openai.com/api-keys',
     apiBaseUrl: 'https://api.openai.com/v1',
     modelsEndpoint: '/models',
+    chatEndpoint: '/chat/completions',
     authHeaderKey: 'Authorization',
     authHeaderValue: 'Bearer {key}',
     supportsDynamicFetch: true,
@@ -76,6 +83,7 @@ export const PROVIDERS = [
     apiKeyUrl: 'https://makersuite.google.com/app/apikey',
     apiBaseUrl: 'https://generativelanguage.googleapis.com/v1beta',
     modelsEndpoint: '/models',
+    chatEndpoint: '/:model:streamGenerateContent', // model inserted at runtime
     authHeaderKey: null, // Uses query param instead
     authHeaderValue: null,
     supportsDynamicFetch: true,
@@ -116,8 +124,12 @@ export const PROVIDERS = [
     apiKeyUrl: 'https://console.anthropic.com/settings/keys',
     apiBaseUrl: 'https://api.anthropic.com',
     modelsEndpoint: '/v1/models',
+    chatEndpoint: '/v1/messages',
     authHeaderKey: 'x-api-key',
     authHeaderValue: '{key}',
+    extraHeaders: {
+      'anthropic-version': '2023-06-01'
+    },
     supportsDynamicFetch: true,
     requiresApiKey: true,
     fallbackModels: [

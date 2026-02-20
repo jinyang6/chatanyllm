@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, memo, useCallback } from 'react'
 import { Check as CheckIcon, ChevronsUpDown as ChevronsUpDownIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -19,14 +19,65 @@ import { cn } from '@/lib/utils'
 const ITEMS_PER_PAGE = 50
 const LARGE_LIST_THRESHOLD = 100
 
-// Helper to render capability tag
-const CapabilityTag = ({ label }) => {
+// Helper to render capability tag — memo prevents re-render when parent re-renders due to search
+const CapabilityTag = memo(({ label }) => {
   return (
     <span className="inline-block px-2 py-0.5 rounded-full text-xs border border-gray-400 bg-white text-gray-900">
       {label}
     </span>
   )
-}
+})
+
+// Full option row — memo prevents re-render when search query changes but option data hasn't
+// onSelect receives the raw currentValue from CommandItem; selectedValue is needed to toggle off
+const OptionRow = memo(({ option, isSelected, showDescription, selectedValue, onValueChange, onClose }) => {
+  return (
+    <CommandItem
+      value={option.id}
+      onSelect={(currentValue) => {
+        onValueChange(currentValue === selectedValue ? '' : currentValue)
+        onClose()
+      }}
+    >
+      <CheckIcon
+        className={cn(
+          'mr-2 h-4 w-4',
+          isSelected ? 'opacity-100' : 'opacity-0'
+        )}
+      />
+      <div className="flex-1">
+        <div className="font-medium">{option.name}</div>
+        {showDescription && option.description && (
+          <div className="text-xs text-muted-foreground line-clamp-2">
+            {option.description}
+          </div>
+        )}
+        {showDescription && (
+          <div className="flex flex-wrap gap-1.5 mt-1.5">
+            {option.contextWindow && (
+              <CapabilityTag label={`${option.contextWindow} context`} />
+            )}
+            {option.outputModalities?.includes('text') && (
+              <CapabilityTag label="Text" />
+            )}
+            {option.outputModalities?.includes('image') && (
+              <CapabilityTag label="Image Gen" />
+            )}
+            {option.inputModalities?.includes('image') && (
+              <CapabilityTag label="Vision" />
+            )}
+            {option.inputModalities?.includes('file') && (
+              <CapabilityTag label="Files" />
+            )}
+            {option.inputModalities?.includes('audio') && (
+              <CapabilityTag label="Audio" />
+            )}
+          </div>
+        )}
+      </div>
+    </CommandItem>
+  )
+})
 
 export function SearchableSelect({
   value,
@@ -56,7 +107,6 @@ export function SearchableSelect({
 
   // Filter and paginate options
   const { filteredOptions, hasMore, totalCount } = useMemo(() => {
-    // Filter based on search query
     const filtered = searchQuery
       ? options.filter(
           (option) =>
@@ -78,6 +128,8 @@ export function SearchableSelect({
   const handleLoadMore = () => {
     setDisplayCount(prev => Math.min(prev + ITEMS_PER_PAGE, totalCount))
   }
+
+  const handleClose = useCallback(() => setOpen(false), [])
 
   const isLargeList = options.length >= LARGE_LIST_THRESHOLD
 
@@ -127,7 +179,6 @@ export function SearchableSelect({
                 ) : (
                   <>
                     <CommandGroup className="overflow-visible">
-                      {/* Show count for large lists */}
                       {isLargeList && (
                         <div className="px-2 py-1.5 text-xs text-muted-foreground">
                           Showing {filteredOptions.length} of {totalCount} models
@@ -135,56 +186,18 @@ export function SearchableSelect({
                       )}
 
                       {filteredOptions.map((option) => (
-                        <CommandItem
+                        <OptionRow
                           key={option.id}
-                          value={option.id}
-                          onSelect={(currentValue) => {
-                            onValueChange(currentValue === value ? '' : currentValue)
-                            setOpen(false)
-                          }}
-                        >
-                          <CheckIcon
-                            className={cn(
-                              'mr-2 h-4 w-4',
-                              value === option.id ? 'opacity-100' : 'opacity-0'
-                            )}
-                          />
-                          <div className="flex-1">
-                            <div className="font-medium">{option.name}</div>
-                            {showDescription && option.description && (
-                              <div className="text-xs text-muted-foreground line-clamp-2">
-                                {option.description}
-                              </div>
-                            )}
-                            {/* Display capabilities as tags */}
-                            {showDescription && (
-                              <div className="flex flex-wrap gap-1.5 mt-1.5">
-                                {option.contextWindow && (
-                                  <CapabilityTag label={`${option.contextWindow} context`} />
-                                )}
-                                {option.outputModalities?.includes('text') && (
-                                  <CapabilityTag label="Text" />
-                                )}
-                                {option.outputModalities?.includes('image') && (
-                                  <CapabilityTag label="Image Gen" />
-                                )}
-                                {option.inputModalities?.includes('image') && (
-                                  <CapabilityTag label="Vision" />
-                                )}
-                                {option.inputModalities?.includes('file') && (
-                                  <CapabilityTag label="Files" />
-                                )}
-                                {option.inputModalities?.includes('audio') && (
-                                  <CapabilityTag label="Audio" />
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        </CommandItem>
+                          option={option}
+                          isSelected={value === option.id}
+                          showDescription={showDescription}
+                          selectedValue={value}
+                          onValueChange={onValueChange}
+                          onClose={handleClose}
+                        />
                       ))}
                     </CommandGroup>
 
-                    {/* Load More Button */}
                     {hasMore && (
                       <div className="border-t p-2">
                         <Button

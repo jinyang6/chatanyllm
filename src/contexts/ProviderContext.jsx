@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react'
-import { store, isElectron, isEncryptionAvailable } from '@/lib/electron'
+import { isElectron, isEncryptionAvailable } from '@/platform/ElectronBridge'
+import { secureStore as store } from '@/data/SecureStore'
 
 const ProviderContext = createContext(null)
 

@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
 import { useProvider } from '@/contexts/ProviderContext'
-import { fetchModelsForProvider } from '@/services/modelFetcher'
+import { fetchModelsForProvider } from '@/api/ModelFetcher'
 import { getProviderById, getFallbackModels } from '@/config/providers'
 
 // Error type constants

@@ -2,7 +2,7 @@
  * Utility functions for streaming message configuration
  */
 
-import { getModalitiesForModel, getReasoningConfig } from './modelHelpers'
+import { getModalitiesForModel, getReasoningConfig } from '@/core/model/ModelUtils'
 
 /**
  * Create streaming callbacks configuration
