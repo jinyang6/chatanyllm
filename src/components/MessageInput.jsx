@@ -120,7 +120,7 @@ function MessageInput({ onSendMessage, isStreaming = false, onStopGeneration, di
     for (const file of files) {
       // Check file size (max 10MB)
       if (file.size > 10 * 1024 * 1024) {
-        alert(`File ${file.name} is too large. Maximum size is 10MB.`)
+        toast.error(`${file.name} is too large (max 10MB)`)
         continue
       }
 

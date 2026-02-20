@@ -38,9 +38,9 @@ function Sidebar({ isOpen, currentConversation, onSelectConversation, onOpenSett
     await startNewConversation()
   }
 
-  const handleSelectConversation = (convId) => {
+  const handleSelectConversation = (conversationID) => {
     // Find the conversation being selected
-    const conversation = conversations.find(c => c.id === convId)
+    const conversation = conversations.find(c => c.id ===conversationID)
 
     // Switch to the provider that was last used in this conversation
     if (conversation && conversation.provider) {
@@ -57,9 +57,9 @@ function Sidebar({ isOpen, currentConversation, onSelectConversation, onOpenSett
       }
     }
 
-    selectConversation(convId)
+    selectConversation(conversationID)
     if (onSelectConversation) {
-      onSelectConversation(convId)
+      onSelectConversation(conversationID)
     }
   }
 

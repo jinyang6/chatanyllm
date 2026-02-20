@@ -16,7 +16,6 @@ export const AttachmentList = memo(({ attachments, onRemove, onPreview, compact 
   if (!attachments || attachments.length === 0) return null
 
   if (compact) {
-    // Read-only pill style used in MessageList
     return (
       <ScrollArea className="mb-2 w-full">
         <div className="flex flex-nowrap gap-2 pb-5">
@@ -27,11 +26,7 @@ export const AttachmentList = memo(({ attachments, onRemove, onPreview, compact 
               onClick={() => attachment.isImage && onPreview?.({ url: attachment.data, name: attachment.name })}
             >
               {attachment.isImage ? (
-                <img
-                  src={attachment.data}
-                  alt={attachment.name}
-                  className="h-5 w-5 object-cover rounded"
-                />
+                <img src={attachment.data} alt={attachment.name} className="h-5 w-5 object-cover rounded" />
               ) : (
                 <FileIcon className="h-5 w-5 text-muted-foreground flex-shrink-0" />
               )}

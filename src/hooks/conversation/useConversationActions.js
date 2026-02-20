@@ -2,10 +2,18 @@ import { ConversationRepository as conversationStorage } from '@/data/Conversati
 import { v4 as uuidv4 } from 'uuid'
 import { ConversationManager as conversationManager } from '@/core/chat/ConversationManager'
 
-/**
- * Hook for core list operations (loading, sorting, deletion).
- */
 export function useConversationActions(setConversations, conversationsRef, currentConversationId, setCurrentConversationId) {
+
+  const persistUpdate = async (updated, label) => {
+    setConversations(prev =>
+      conversationManager.sortByRecent(prev.map(c => c.id === updated.id ? updated : c))
+    )
+    try {
+      await conversationStorage.save(updated)
+    } catch (e) {
+      console.error(`${label} save error:`, e)
+    }
+  }
 
   const createNewConversation = async () => {
     const newConv = conversationManager.createNewObject()
@@ -19,35 +27,19 @@ export function useConversationActions(setConversations, conversationsRef, curre
   }
 
   const updateConversationTitle = async (conversationId, newTitle) => {
-    const conversation = conversationsRef.current.find(c => c.id === conversationId)
-    if (!conversation) return
-
-    const updated = {
-      ...conversation,
-      title: newTitle.trim() || 'New Conversation',
-      updatedAt: new Date().toISOString()
-    }
-
-    try {
-      await conversationStorage.save(updated)
-    } catch (e) {
-      console.error('Title save error:', e)
-    }
-
-    setConversations(prev =>
-      conversationManager.sortByRecent(prev.map(c => c.id === conversationId ? updated : c))
+    const conv = conversationsRef.current.find(c => c.id === conversationId)
+    if (!conv) return
+    await persistUpdate(
+      { ...conv, title: newTitle.trim() || 'New Conversation', updatedAt: new Date().toISOString() },
+      'Title'
     )
   }
 
   const deleteConversation = async (conversationId, isStreaming, stopStreaming) => {
     const result = await conversationStorage.delete(conversationId)
-    if (!result.success) {
-      console.error('Delete error:', result.error)
-    }
+    if (!result.success) console.error('Delete error:', result.error)
 
-    if (isStreaming(conversationId)) {
-      stopStreaming(conversationId)
-    }
+    if (isStreaming(conversationId)) stopStreaming(conversationId)
 
     setConversations(prev => {
       const filtered = prev.filter(c => c.id !== conversationId)
@@ -64,6 +56,9 @@ export function useConversationActions(setConversations, conversationsRef, curre
 
   const addMessage = async (message, conversationId) => {
     const targetId = conversationId || currentConversationId
+    const conv = conversationsRef.current.find(c => c.id === targetId)
+    if (!conv) return
+
     const newMessage = {
       id: uuidv4(),
       role: message.role,
@@ -76,82 +71,47 @@ export function useConversationActions(setConversations, conversationsRef, curre
       attachments: message.attachments || undefined
     }
 
-    let conversationToSave = null
-    setConversations(prev => {
-      const conv = prev.find(c => c.id === targetId)
-      if (!conv) return prev
+    const title = conv.title === 'New Conversation' && message.role === 'user'
+      ? conversationManager.generateTitle(message)
+      : conv.title
 
-      const updatedMessages = [...(conv.messages || []), newMessage]
-      let title = conv.title
-      if (title === 'New Conversation' && message.role === 'user') {
-        title = conversationManager.generateTitle(message)
-      }
-
-      const updated = {
-        ...conv,
-        messages: updatedMessages,
-        title,
-        updatedAt: new Date().toISOString(),
-        model: message.model || conv.model,
-        provider: message.provider || conv.provider
-      }
-      conversationToSave = updated
-      return conversationManager.sortByRecent(prev.map(c => c.id === targetId ? updated : c))
-    })
-
-    if (conversationToSave) {
-      try {
-        await conversationStorage.save(conversationToSave)
-      } catch (e) {
-        console.error('Add message save error:', e)
-      }
+    const updated = {
+      ...conv,
+      messages: [...(conv.messages || []), newMessage],
+      title,
+      updatedAt: new Date().toISOString(),
+      model: message.model || conv.model,
+      provider: message.provider || conv.provider
     }
+
+    setConversations(prev =>
+      conversationManager.sortByRecent(prev.map(c => c.id === targetId ? updated : c))
+    )
+    try {
+      await conversationStorage.save(updated)
+    } catch (e) {
+      console.error('Add message save error:', e)
+    }
+
     return newMessage
   }
 
   const replaceMessages = async (newMessages) => {
-    let conversationToSave = null
-    setConversations(prev => {
-      const conv = prev.find(c => c.id === currentConversationId)
-      if (!conv) return prev
-      const updated = {
-        ...conv,
-        messages: newMessages,
-        updatedAt: new Date().toISOString()
-      }
-      conversationToSave = updated
-      return conversationManager.sortByRecent(prev.map(c => c.id === currentConversationId ? updated : c))
-    })
-
-    if (conversationToSave) {
-      try {
-        await conversationStorage.save(conversationToSave)
-      } catch (e) {
-        console.error('Replace messages save error:', e)
-      }
-    }
+    const conv = conversationsRef.current.find(c => c.id === currentConversationId)
+    if (!conv) return
+    await persistUpdate(
+      { ...conv, messages: newMessages, updatedAt: new Date().toISOString() },
+      'Replace messages'
+    )
   }
 
   const deleteMessage = async (messageId) => {
-    const currentConv = conversationsRef.current.find(c => c.id === currentConversationId)
-    if (!currentConv) return
-
-    const newMessages = currentConv.messages.filter(m => m.id !== messageId)
-    const updated = {
-      ...currentConv,
-      messages: newMessages,
-      updatedAt: new Date().toISOString()
-    }
-
-    setConversations(prev =>
-      conversationManager.sortByRecent(prev.map(c => c.id === currentConversationId ? updated : c))
+    const conv = conversationsRef.current.find(c => c.id === currentConversationId)
+    if (!conv) return
+    await persistUpdate(
+      { ...conv, messages: conv.messages.filter(m => m.id !== messageId), updatedAt: new Date().toISOString() },
+      'Delete message'
     )
-
-    try {
-      await conversationStorage.save(updated)
-    } catch (e) {
-      console.error('Delete message save error:', e)
-    }
   }
 
   return {
