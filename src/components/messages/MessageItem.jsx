@@ -113,7 +113,7 @@ export const MessageItem = memo(({
               {/* Response content */}
               <div className="relative">
                 <div className={`relative ${isCollapsed ? 'max-h-[120px] overflow-hidden' : ''}`}>
-                  <div className="prose prose-lg max-w-none break-words prose-ul:list-disc prose-ol:list-decimal prose-li:marker:text-gray-900 dark:prose-li:marker:text-gray-100 prose-p:text-gray-900 dark:prose-p:text-gray-100">
+                  <div className="prose prose-lg max-w-none break-words prose-ul:list-disc prose-ol:list-decimal prose-li:marker:text-gray-900 dark:prose-li:marker:text-gray-100 prose-p:text-gray-900 dark:prose-p:text-gray-100 select-text">
                     <MemoizedMarkdownContent
                       content={message.role === 'user' ? cleanContent.replace(/\n/g, '\n\n') : cleanContent}
                       onImageClick={onSetPreviewImage}
