@@ -31,7 +31,10 @@ function Sidebar({ isOpen, currentConversation, onSelectConversation, onOpenSett
     if (days === 1) return 'Yesterday'
     if (days < 7) return `${days} days ago`
 
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    const sameYear = date.getFullYear() === now.getFullYear()
+    return sameYear
+      ? date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+      : date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
   }
 
   const handleNewConversation = async () => {
