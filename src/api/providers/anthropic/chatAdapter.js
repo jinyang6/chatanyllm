@@ -3,8 +3,12 @@
  * Handles Claude-specific API format and streaming
  */
 
+import { validateChatParams, getErrorMessageFromResponse, handleNetworkError } from '@/core/chat/utils/chatUtils'
+import { getProviderById } from '@/config/providers'
+
 export async function sendStreamingMessage({
   apiKey,
+  baseUrl,
   model,
   messages,
   onChunk,
@@ -26,15 +30,12 @@ export async function sendStreamingMessage({
 
   try {
     // Validate required parameters
-    if (!apiKey || typeof apiKey !== 'string') {
-      throw new Error('Invalid API key')
-    }
-    if (!model || typeof model !== 'string') {
-      throw new Error('Invalid model')
-    }
-    if (!Array.isArray(messages) || messages.length === 0) {
-      throw new Error('Messages must be a non-empty array')
-    }
+    validateChatParams({ apiKey, model, messages })
+
+    // Use provided baseUrl or fall back to config
+    const provider = getProviderById('anthropic')
+    const apiBase = (baseUrl || provider.apiBaseUrl).replace(/\/$/, '')
+    const endpoint = `${apiBase}${provider.chatEndpoint}`
 
     // Convert messages to Anthropic format
     // Extract system message if present (Anthropic requires it separately)
@@ -69,12 +70,12 @@ export async function sendStreamingMessage({
       requestBody.system = systemMessage
     }
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01'
+        [provider.authHeaderKey]: apiKey,
+        ...provider.extraHeaders
       },
       body: JSON.stringify(requestBody),
       signal: abortSignal
@@ -82,24 +83,7 @@ export async function sendStreamingMessage({
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
-
-      // Create appropriate error message based on status
-      let errorMessage
-      if (response.status === 429) {
-        const retryAfter = response.headers.get('retry-after')
-        const waitTime = retryAfter ? ` Please wait ${retryAfter} seconds.` : ''
-        errorMessage = `Rate limit exceeded.${waitTime}`
-      } else if (response.status === 401) {
-        errorMessage = errorData.error?.message || 'Invalid API key or unauthorized access.'
-      } else if (response.status === 403) {
-        errorMessage = errorData.error?.message || 'Access forbidden. Check your API key permissions.'
-      } else if (response.status === 404) {
-        errorMessage = errorData.error?.message || 'Model or endpoint not found.'
-      } else if (response.status >= 500) {
-        errorMessage = errorData.error?.message || `Server error (${response.status}). Please try again later.`
-      } else {
-        errorMessage = errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`
-      }
+      const errorMessage = getErrorMessageFromResponse(response, errorData, 'Anthropic API')
 
       // Call onError instead of throwing - prevents uncaught errors
       const error = new Error(errorMessage)
@@ -258,16 +242,7 @@ export async function sendStreamingMessage({
     }
 
     // Handle network errors and other unexpected errors
-    let errorMessage = error.message
-
-    if (error.name === 'TypeError' && error.message.includes('fetch')) {
-      errorMessage = 'Network error: Unable to connect to the Anthropic API. Please check your internet connection.'
-    } else if (error.name === 'SyntaxError') {
-      errorMessage = 'Invalid response from Anthropic API. Please try again.'
-    } else if (!errorMessage) {
-      errorMessage = 'An unexpected error occurred. Please try again.'
-    }
-
+    const errorMessage = handleNetworkError(error, 'Anthropic API')
     const wrappedError = new Error(errorMessage)
     onError(wrappedError)
   }

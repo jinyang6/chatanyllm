@@ -18,8 +18,8 @@ import { PROVIDERS, getAllModels } from '@/config/providers'
 import { useProvider } from '@/contexts/ProviderContext'
 import { useModelFetcher, ERROR_TYPES } from '@/hooks/useModelFetcher'
 import { useError } from '@/contexts/ErrorContext'
-import { testApiConnection, validateBeforeTest } from '@/services/apiTester'
-import { openExternal } from '@/lib/electron'
+import { testApiConnection, validateBeforeTest } from '@/core/chat/ApiTester'
+import { openExternal } from '@/platform/ElectronBridge'
 
 function SettingsModal({ onClose }) {
   const {

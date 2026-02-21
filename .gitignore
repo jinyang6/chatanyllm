@@ -4,7 +4,13 @@ node_modules/
 # Build outputs
 dist/
 dist-electron/
+build/
+out/
+release/
 *.local
+
+# Electron builder cache
+.electron-builder-cache/
 
 # Environment variables
 .env

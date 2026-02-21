@@ -1,4 +1,5 @@
-import { isElectron, fileSystem, dialog } from '@/lib/electron'
+import { isElectron } from '@/platform/ElectronBridge'
+import { fileSystem } from '@/platform/FileSystem'
 import { toast } from 'sonner'
 
 /**

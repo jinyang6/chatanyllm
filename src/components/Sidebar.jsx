@@ -31,16 +31,19 @@ function Sidebar({ isOpen, currentConversation, onSelectConversation, onOpenSett
     if (days === 1) return 'Yesterday'
     if (days < 7) return `${days} days ago`
 
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    const sameYear = date.getFullYear() === now.getFullYear()
+    return sameYear
+      ? date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+      : date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
   }
 
   const handleNewConversation = async () => {
     await startNewConversation()
   }
 
-  const handleSelectConversation = (convId) => {
+  const handleSelectConversation = (conversationID) => {
     // Find the conversation being selected
-    const conversation = conversations.find(c => c.id === convId)
+    const conversation = conversations.find(c => c.id ===conversationID)
 
     // Switch to the provider that was last used in this conversation
     if (conversation && conversation.provider) {
@@ -57,9 +60,9 @@ function Sidebar({ isOpen, currentConversation, onSelectConversation, onOpenSett
       }
     }
 
-    selectConversation(convId)
+    selectConversation(conversationID)
     if (onSelectConversation) {
-      onSelectConversation(convId)
+      onSelectConversation(conversationID)
     }
   }
 
@@ -145,7 +148,7 @@ function Sidebar({ isOpen, currentConversation, onSelectConversation, onOpenSett
                     flex items-center gap-3 w-full rounded-md py-4 pl-4 pr-2
                     cursor-pointer transition-colors
                     ${currentConversationId === conv.id
-                      ? 'bg-secondary text-secondary-foreground'
+                      ? 'bg-accent text-secondary-foreground'
                       : 'hover:bg-accent hover:text-accent-foreground'}
                   `}
                 >

@@ -55,6 +55,18 @@ export function formatMessageForAPI(message, attachments = []) {
   return { role: message.role || 'user', content: contentParts }
 }
 
+// Strip generated image blobs from content before sending to API.
+// Both inline base64 markers and file-path markers are replaced with a plain text note.
+const GENERATED_IMAGE_INLINE_RE = /\[GENERATED_IMAGE:data:image\/\w+;base64,[^\]]+:END_IMAGE\]/g
+const GENERATED_IMAGE_FILE_RE = /\[GENERATED_IMAGE_FILE:[^\]]+:END_IMAGE\]/g
+
+function stripGeneratedImages(content) {
+  return content
+    .replace(GENERATED_IMAGE_INLINE_RE, '[generated image]')
+    .replace(GENERATED_IMAGE_FILE_RE, '[generated image]')
+    .trim()
+}
+
 /**
  * Convert message history to API format, handling attachments
  * @param {Array} messages - Array of message objects
@@ -62,11 +74,10 @@ export function formatMessageForAPI(message, attachments = []) {
  */
 export function formatMessagesForAPI(messages) {
   return messages.map(m => {
-    // Handle messages with attachments
+    const content = stripGeneratedImages(m.content || '')
     if (m.attachments && m.attachments.length > 0) {
-      return formatMessageForAPI(m, m.attachments)
+      return formatMessageForAPI({ ...m, content }, m.attachments)
     }
-    // Simple text message
-    return { role: m.role, content: m.content }
+    return { role: m.role, content }
   })
 }

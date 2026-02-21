@@ -218,12 +218,9 @@ async function handleResponse(response, providerId) {
 function extractModelCount(data, providerId) {
   // OpenRouter auth endpoint returns key info, not models
   if (providerId === 'openrouter' && data.data) {
-    // Auth endpoint response - key is valid but doesn't contain model count
-    // Return 1 to indicate successful validation
     return 1
   }
 
-  // Different providers return data in different formats
   if (Array.isArray(data)) {
     return data.length
   }
@@ -236,7 +233,6 @@ function extractModelCount(data, providerId) {
     return data.models.length
   }
 
-  // Gemini specific
   if (providerId === 'gemini' && data.models) {
     return data.models.filter(m =>
       m.supportedGenerationMethods?.includes('generateContent')

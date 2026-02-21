@@ -4,6 +4,9 @@
  * Updated: 2025-01-15
  */
 
+import { validateChatParams, getErrorMessageFromResponse, handleNetworkError } from '@/core/chat/utils/chatUtils'
+import { getProviderById } from '@/config/providers'
+
 export async function sendStreamingMessage({
   apiKey,
   baseUrl,
@@ -30,15 +33,7 @@ export async function sendStreamingMessage({
 
   try {
     // Validate required parameters
-    if (!apiKey || typeof apiKey !== 'string') {
-      throw new Error('Invalid API key')
-    }
-    if (!model || typeof model !== 'string') {
-      throw new Error('Invalid model')
-    }
-    if (!Array.isArray(messages) || messages.length === 0) {
-      throw new Error('Messages must be a non-empty array')
-    }
+    validateChatParams({ apiKey, model, messages })
 
     const requestBody = {
       model,
@@ -67,7 +62,8 @@ export async function sendStreamingMessage({
       throw new Error('Invalid base URL')
     }
 
-    const response = await fetch(`${baseUrl}/chat/completions`, {
+    const provider = getProviderById('openai')
+    const response = await fetch(`${baseUrl}${provider.chatEndpoint}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -79,24 +75,7 @@ export async function sendStreamingMessage({
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
-
-      // Create appropriate error message based on status
-      let errorMessage
-      if (response.status === 429) {
-        const retryAfter = response.headers.get('retry-after')
-        const waitTime = retryAfter ? ` Please wait ${retryAfter} seconds.` : ''
-        errorMessage = `Rate limit exceeded.${waitTime}`
-      } else if (response.status === 401) {
-        errorMessage = errorData.error?.message || 'Invalid API key or unauthorized access.'
-      } else if (response.status === 403) {
-        errorMessage = errorData.error?.message || 'Access forbidden. Check your API key permissions.'
-      } else if (response.status === 404) {
-        errorMessage = errorData.error?.message || 'Model or endpoint not found.'
-      } else if (response.status >= 500) {
-        errorMessage = errorData.error?.message || `Server error (${response.status}). Please try again later.`
-      } else {
-        errorMessage = errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`
-      }
+      const errorMessage = getErrorMessageFromResponse(response, errorData, 'OpenAI-compatible API')
 
       // Call onError instead of throwing - prevents uncaught errors
       const error = new Error(errorMessage)
@@ -284,17 +263,7 @@ export async function sendStreamingMessage({
     }
 
     // Handle network errors and other unexpected errors
-    // Categorize the error for better user feedback
-    let errorMessage = error.message
-
-    if (error.name === 'TypeError' && error.message.includes('fetch')) {
-      errorMessage = 'Network error: Unable to connect to the API. Please check your internet connection.'
-    } else if (error.name === 'SyntaxError') {
-      errorMessage = 'Invalid response from API. Please try again.'
-    } else if (!errorMessage) {
-      errorMessage = 'An unexpected error occurred. Please try again.'
-    }
-
+    const errorMessage = handleNetworkError(error, 'OpenAI-compatible API')
     const wrappedError = new Error(errorMessage)
     onError(wrappedError)
   }

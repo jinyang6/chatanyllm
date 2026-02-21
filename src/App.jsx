@@ -7,7 +7,7 @@ import TitleBar from './components/TitleBar'
 import Sidebar from './components/Sidebar'
 import ChatWindow from './components/ChatWindow'
 import SettingsModal from './components/SettingsModal'
-import { isElectron, signalAppReady } from './lib/electron'
+import { isElectron, signalAppReady } from '@/platform/ElectronBridge'
 
 // Inner component that signals app ready when both contexts are loaded
 function AppReadySignal() {
