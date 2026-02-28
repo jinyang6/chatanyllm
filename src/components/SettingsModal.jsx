@@ -213,7 +213,7 @@ function SettingsModal({ onClose }) {
             <DialogTitle>API Configuration</DialogTitle>
           </div>
           <DialogDescription>
-            Configure your API keys to start chatting with different AI models. Your keys are stored securely and never shared.
+            Configure your API keys to start chatting with different language models.
           </DialogDescription>
         </DialogHeader>
 

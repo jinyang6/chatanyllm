@@ -2,7 +2,7 @@ export const PROVIDERS = [
   {
     id: 'openrouter',
     name: 'OpenRouter',
-    description: 'Unified gateway providing access to a broad range of open-source and proprietary models.',
+    description: 'Unified gateway providing access to open-source and proprietary models.',
     badge: 'Recommended',
     badgeVariant: 'default',
     apiKeyUrl: 'https://openrouter.ai/keys',
@@ -35,7 +35,7 @@ export const PROVIDERS = [
   {
     id: 'openai',
     name: 'OpenAI',
-    description: 'Advanced models for complex reasoning, multimodal analysis, and general-purpose intelligence.',
+    description: 'Advanced models for multimodal analysis and general-purpose intelligence.',
     badge: null,
     badgeVariant: null,
     apiKeyUrl: 'https://platform.openai.com/api-keys',
@@ -76,7 +76,7 @@ export const PROVIDERS = [
   {
     id: 'gemini',
     name: 'Google Gemini',
-    description: 'Multimodal models featuring large context windows for extensive data processing and analysis.',
+    description: 'Multimodal models with large context windows for data processing and analysis.',
     badge: null,
     badgeVariant: null,
     apiKeyUrl: 'https://makersuite.google.com/app/apikey',
@@ -111,7 +111,7 @@ export const PROVIDERS = [
   {
     id: 'anthropic',
     name: 'Anthropic Claude',
-    description: 'Models optimized for high-fidelity code generation and precise instruction following for tool use.',
+    description: 'Models for high-fidelity code generation and instruction following for tool use.',
     badge: null,
     badgeVariant: null,
     apiKeyUrl: 'https://console.anthropic.com/settings/keys',
