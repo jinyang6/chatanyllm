@@ -161,11 +161,69 @@ export function useConversationStreaming(setConversations, streamingConversation
     }
   }
 
+  // Throttle key namespace for reasoning updates (separate from content throttle)
+  const reasoningThrottleRef = useRef(new Map())
+
+  const updateLastMessageReasoning = (reasoning, conversationId, queuedSetConversations) => {
+    if (abortedConversationIdsRef.current.has(conversationId)) return
+
+    const existing = reasoningThrottleRef.current.get(conversationId)
+    if (existing) {
+      existing.pendingReasoning = reasoning
+      return
+    }
+
+    const timeout = setTimeout(() => {
+      const throttle = reasoningThrottleRef.current.get(conversationId)
+      const latestReasoning = throttle?.pendingReasoning ?? reasoning
+      reasoningThrottleRef.current.delete(conversationId)
+
+      if (abortedConversationIdsRef.current.has(conversationId)) return
+
+      queuedSetConversations(prev => {
+        const conv = prev.find(c => c.id === conversationId)
+        if (!conv || !conv.messages.length) return prev
+        const messages = [...conv.messages]
+        messages[messages.length - 1] = { ...messages[messages.length - 1], reasoning: latestReasoning }
+        return prev.map(c => c.id === conversationId ? { ...conv, messages } : c)
+      })
+    }, STREAMING_CONSTANTS.UI_UPDATE_THROTTLE_MS)
+
+    reasoningThrottleRef.current.set(conversationId, { timeout, pendingReasoning: reasoning })
+  }
+
+  const markReasoningComplete = (conversationId, queuedSetConversations) => {
+    if (abortedConversationIdsRef.current.has(conversationId)) return
+
+    // Flush any pending reasoning update immediately before marking complete
+    const pending = reasoningThrottleRef.current.get(conversationId)
+    if (pending) {
+      clearTimeout(pending.timeout)
+      reasoningThrottleRef.current.delete(conversationId)
+    }
+
+    queuedSetConversations(prev => {
+      const conv = prev.find(c => c.id === conversationId)
+      if (!conv || !conv.messages.length) return prev
+      const messages = [...conv.messages]
+      const last = messages[messages.length - 1]
+      // Flush any pending reasoning text alongside the complete flag
+      messages[messages.length - 1] = {
+        ...last,
+        ...(pending ? { reasoning: pending.pendingReasoning } : {}),
+        isReasoningComplete: true
+      }
+      return prev.map(c => c.id === conversationId ? { ...conv, messages } : c)
+    })
+  }
+
   return {
     isConversationStreaming,
     startStreaming,
     stopStreaming,
     updateLastMessage,
+    updateLastMessageReasoning,
+    markReasoningComplete,
     getAbortSignal: (id) => abortControllersRef.current.get(id)?.signal || null,
     abortedConversationIdsRef
   }

@@ -1,7 +1,4 @@
 import { createContext, useContext, useState, useEffect, useRef, useMemo } from 'react'
-import { v4 as uuidv4 } from 'uuid'
-import { ConversationRepository as conversationStorage } from '@/data/ConversationRepository'
-import { ConversationManager as conversationManager } from '@/core/chat/ConversationManager'
 import { useConversationStreaming } from '@/hooks/conversation/useConversationStreaming'
 import { useConversationActions } from '@/hooks/conversation/useConversationActions'
 import { useConversationList } from '@/hooks/conversation/useConversationList'
@@ -94,29 +91,11 @@ export function ConversationProvider({ children }) {
     getAbortSignal: streaming.getAbortSignal,
     updateLastMessage: (c, s, m, id) => streaming.updateLastMessage(c, s, m, id || currentConversationId, queuedSetConversations),
 
-    // Compatibility for reasoning token streaming
-    updateLastMessageReasoning: (reasoning, save, id) => {
-      const targetId = id || currentConversationId
-      if (streaming.abortedConversationIdsRef.current.has(targetId)) return
-      queuedSetConversations(prev => {
-        const conv = prev.find(c => c.id === targetId)
-        if (!conv || !conv.messages.length) return prev
-        conv.messages[conv.messages.length - 1].reasoning = reasoning
-        conversationStorage.save(conv).catch(e => console.error('Reasoning save error:', e))
-        return [...prev]
-      })
-    },
-    markReasoningComplete: (id) => {
-      const targetId = id || currentConversationId
-      if (streaming.abortedConversationIdsRef.current.has(targetId)) return
-      queuedSetConversations(prev => {
-        const conv = prev.find(c => c.id === targetId)
-        if (!conv || !conv.messages.length) return prev
-        conv.messages[conv.messages.length - 1].isReasoningComplete = true
-        conversationStorage.save(conv).catch(e => console.error('Reasoning complete save error:', e))
-        return [...prev]
-      })
-    },
+    // Reasoning token streaming
+    updateLastMessageReasoning: (reasoning, save, id) =>
+      streaming.updateLastMessageReasoning(reasoning, id || currentConversationId, queuedSetConversations),
+    markReasoningComplete: (id) =>
+      streaming.markReasoningComplete(id || currentConversationId, queuedSetConversations),
 
     // Actions
     addMessage: (m, id) => actions.addMessage(m, id || currentConversationId),
