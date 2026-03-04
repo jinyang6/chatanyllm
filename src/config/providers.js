@@ -2,7 +2,7 @@ export const PROVIDERS = [
   {
     id: 'openrouter',
     name: 'OpenRouter',
-    description: 'Unified API gateway providing access to multiple frontier AI models',
+    description: 'Unified gateway providing access to open-source and proprietary models.',
     badge: 'Recommended',
     badgeVariant: 'default',
     apiKeyUrl: 'https://openrouter.ai/keys',
@@ -14,29 +14,28 @@ export const PROVIDERS = [
     authHeaderValue: 'Bearer {key}',
     extraHeaders: {
       'X-Title': 'ChatAnyLLM'
-      // 'HTTP-Referer' is set dynamically at runtime using window.location.origin
     },
     supportsDynamicFetch: true,
     requiresApiKey: true,
     fallbackModels: [
       {
-        id: 'anthropic/claude-3.5-sonnet',
-        name: 'Claude 3.5 Sonnet',
+        id: 'anthropic/claude-3.7-sonnet',
+        name: 'Claude 3.7 Sonnet',
         contextWindow: '200k',
-        description: 'Most intelligent model, best for complex tasks'
+        description: 'Hybrid reasoning model featuring both standard and extended thought modes.'
       },
       {
-        id: 'openai/gpt-4-turbo',
-        name: 'GPT-4 Turbo',
+        id: 'openai/gpt-4o',
+        name: 'GPT-4o',
         contextWindow: '128k',
-        description: 'Fast and capable, great for general use'
+        description: 'High-performance multimodal model for fast and complex instruction following.'
       }
     ]
   },
   {
     id: 'openai',
     name: 'OpenAI',
-    description: 'Versatile models for text generation, reasoning, and visual understanding',
+    description: 'Advanced models for multimodal analysis and general-purpose intelligence.',
     badge: null,
     badgeVariant: null,
     apiKeyUrl: 'https://platform.openai.com/api-keys',
@@ -49,76 +48,70 @@ export const PROVIDERS = [
     requiresApiKey: true,
     fallbackModels: [
       {
-        id: 'gpt-4o',
-        name: 'GPT-4o',
+        id: 'o1',
+        name: 'o1',
         contextWindow: '128k',
-        description: 'Flagship multimodal model with superior vision and reasoning'
-      },
-      {
-        id: 'gpt-4o-mini',
-        name: 'GPT-4o Mini',
-        contextWindow: '128k',
-        description: 'Fast, cost-efficient model for high-volume tasks'
+        description: 'Advanced reasoning model for complex scientific and mathematical logic.'
       },
       {
         id: 'o3-mini',
         name: 'o3-mini',
         contextWindow: '128k',
-        description: 'Advanced reasoning model for complex problem-solving'
+        description: 'Efficient reasoning model providing deep logic with lower latency.'
       },
       {
-        id: 'gpt-4-turbo',
-        name: 'GPT-4 Turbo',
+        id: 'gpt-4o',
+        name: 'GPT-4o',
         contextWindow: '128k',
-        description: 'Powerful multimodal capabilities with large context'
+        description: 'Flagship model balancing intelligence across text and vision.'
+      },
+      {
+        id: 'gpt-4o-mini',
+        name: 'GPT-4o Mini',
+        contextWindow: '128k',
+        description: 'Fast, cost-efficient model for high-volume, high-speed tasks.'
       }
     ]
   },
   {
     id: 'gemini',
     name: 'Google Gemini',
-    description: 'Advanced models excelling at coding, search, and large-scale analysis',
+    description: 'Multimodal models with large context windows for data processing and analysis.',
     badge: null,
     badgeVariant: null,
     apiKeyUrl: 'https://makersuite.google.com/app/apikey',
     apiBaseUrl: 'https://generativelanguage.googleapis.com/v1beta',
     modelsEndpoint: '/models',
-    chatEndpoint: '/:model:streamGenerateContent', // model inserted at runtime
-    authHeaderKey: null, // Uses query param instead
+    chatEndpoint: '/:model:streamGenerateContent',
+    authHeaderKey: null,
     authHeaderValue: null,
     supportsDynamicFetch: true,
     requiresApiKey: true,
     fallbackModels: [
       {
-        id: 'gemini-2.5-pro',
-        name: 'Gemini 2.5 Pro',
-        contextWindow: '1M',
-        description: 'State-of-the-art reasoning for complex code and STEM tasks'
-      },
-      {
-        id: 'gemini-2.5-flash',
-        name: 'Gemini 2.5 Flash',
-        contextWindow: '1M',
-        description: 'Best price-performance for large-scale, low-latency workloads'
-      },
-      {
-        id: 'gemini-2.5-flash-lite',
-        name: 'Gemini 2.5 Flash Lite',
-        contextWindow: '1M',
-        description: 'Fastest model optimized for cost-efficiency and high throughput'
-      },
-      {
         id: 'gemini-2.0-flash',
         name: 'Gemini 2.0 Flash',
         contextWindow: '1M',
-        description: 'Production-ready multimodal model with strong performance'
+        description: 'Next-generation model optimized for low-latency multimodal processing.'
+      },
+      {
+        id: 'gemini-1.5-pro',
+        name: 'Gemini 1.5 Pro',
+        contextWindow: '2M',
+        description: 'High-capacity model for analyzing massive datasets and long documents.'
+      },
+      {
+        id: 'gemini-1.5-flash',
+        name: 'Gemini 1.5 Flash',
+        contextWindow: '1M',
+        description: 'Fast, lightweight model designed for speed and efficient scaling.'
       }
     ]
   },
   {
     id: 'anthropic',
     name: 'Anthropic Claude',
-    description: 'Advanced AI assistant with extended context and reasoning capabilities',
+    description: 'Models for high-fidelity code generation and instruction following for tool use.',
     badge: null,
     badgeVariant: null,
     apiKeyUrl: 'https://console.anthropic.com/settings/keys',
@@ -134,38 +127,27 @@ export const PROVIDERS = [
     requiresApiKey: true,
     fallbackModels: [
       {
-        id: 'claude-sonnet-4-5-20250929',
-        name: 'Claude Sonnet 4.5',
-        contextWindow: '200k',
-        description: 'Latest and most capable Claude model with extended thinking'
-      },
-      {
-        id: 'claude-opus-4-20250514',
-        name: 'Claude Opus 4',
-        contextWindow: '200k',
-        description: 'Powerful model for complex reasoning and analysis'
-      },
-      {
         id: 'claude-3-7-sonnet-20250219',
         name: 'Claude 3.7 Sonnet',
         contextWindow: '200k',
-        description: 'Enhanced version with improved performance'
+        description: 'State-of-the-art model with a hybrid reasoning engine and reliable tool-calling.'
       },
       {
         id: 'claude-3-5-sonnet-20241022',
         name: 'Claude 3.5 Sonnet',
         contextWindow: '200k',
-        description: 'Balanced performance and intelligence'
+        description: 'Balanced model for high intelligence and precise technical tasks.'
       },
       {
         id: 'claude-3-5-haiku-20241022',
         name: 'Claude 3.5 Haiku',
         contextWindow: '200k',
-        description: 'Fast and efficient for everyday tasks'
+        description: 'High-speed model for automated workflows and rapid code generation.'
       }
     ]
   }
 ]
+
 
 export function getProviderById(providerId) {
   return PROVIDERS.find(p => p.id === providerId)

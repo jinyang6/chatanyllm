@@ -9,6 +9,7 @@ import { minimalSanitizeSchema } from '@/lib/sanitizeSchema'
 import 'katex/dist/katex.min.css'
 import { CopyButton } from '@/components/ui/copy-button'
 import { extractImageName } from '@/utils/imageDownload'
+import { preprocessContent } from '@/utils/contentPreprocessor'
 
 // ─── Simple function components for react-markdown ───────────────────────────
 
@@ -68,6 +69,7 @@ const createRefSafeComponent = (Tag) => (props) => {
 // ─── MemoizedMarkdownContent ──────────────────────────────────────────────────
 
 export const MemoizedMarkdownContent = memo(({ content, onImageClick }) => {
+  const processedContent = preprocessContent(content)
   return (
     <ReactMarkdown
       remarkPlugins={[remarkGfm, remarkMath]}
@@ -134,7 +136,7 @@ export const MemoizedMarkdownContent = memo(({ content, onImageClick }) => {
         em: createRefSafeComponent('em'),
       }}
     >
-      {content}
+      {processedContent}
     </ReactMarkdown>
   )
 }, (prevProps, nextProps) => {
