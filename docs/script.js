@@ -1,10 +1,12 @@
 // ========================================
-// GitHub API Integration for Latest Release
+// GitHub & SourceForge API Integration
 // ========================================
 
 const GITHUB_REPO = 'jinyang6/chatanyllm';
 const GITHUB_API_URL = `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`;
 const GITHUB_ALL_RELEASES_URL = `https://api.github.com/repos/${GITHUB_REPO}/releases`;
+const SOURCEFORGE_PROJECT = 'chatanyllm';
+const SOURCEFORGE_STATS_URL = `https://sourceforge.net/projects/${SOURCEFORGE_PROJECT}/files/stats/json?start_date=2000-01-01&end_date=${new Date().toISOString().split('T')[0]}`;
 
 // DOM Elements
 const downloadCard = document.getElementById('download-card');
@@ -18,8 +20,8 @@ const downloadButton = document.getElementById('download-button');
 const releaseNotesLink = document.getElementById('release-notes-link');
 const downloadStats = document.getElementById('download-stats');
 
-// Fetch total downloads across all releases
-async function fetchTotalDownloads() {
+// Fetch total downloads from GitHub
+async function fetchGitHubDownloads() {
   try {
     const response = await fetch(GITHUB_ALL_RELEASES_URL);
 
@@ -29,7 +31,6 @@ async function fetchTotalDownloads() {
 
     const releases = await response.json();
 
-    // Sum downloads across all releases
     let totalDownloads = 0;
     releases.forEach(release => {
       release.assets.forEach(asset => {
@@ -39,7 +40,21 @@ async function fetchTotalDownloads() {
 
     return totalDownloads;
   } catch (error) {
-    console.error('Error fetching total downloads:', error);
+    console.error('Error fetching GitHub downloads:', error);
+    return 0;
+  }
+}
+
+// Fetch total downloads from SourceForge
+async function fetchSourceForgeDownloads() {
+  try {
+    const response = await fetch(SOURCEFORGE_STATS_URL);
+    if (!response.ok) throw new Error('SourceForge API error');
+    
+    const data = await response.json();
+    return data.total || 0;
+  } catch (error) {
+    console.error('Error fetching SourceForge downloads:', error);
     return 0;
   }
 }
@@ -47,10 +62,10 @@ async function fetchTotalDownloads() {
 // Fetch latest release from GitHub API
 async function fetchLatestRelease() {
   try {
-    // Fetch both latest release and total downloads in parallel
-    const [releaseResponse, totalDownloads] = await Promise.all([
+    const [releaseResponse, githubDownloads, sourceforgeDownloads] = await Promise.all([
       fetch(GITHUB_API_URL),
-      fetchTotalDownloads()
+      fetchGitHubDownloads(),
+      fetchSourceForgeDownloads()
     ]);
 
     if (!releaseResponse.ok) {
@@ -59,7 +74,6 @@ async function fetchLatestRelease() {
 
     const data = await releaseResponse.json();
 
-    // Find the Windows installer (.exe) asset
     const exeAsset = data.assets.find(asset =>
       asset.name.endsWith('.exe') && asset.name.includes('Setup')
     );
@@ -68,7 +82,8 @@ async function fetchLatestRelease() {
       throw new Error('No Windows installer found in latest release');
     }
 
-    // Update the download section with release info
+    const totalDownloads = githubDownloads + sourceforgeDownloads;
+
     updateDownloadSection({
       version: data.tag_name,
       downloadUrl: exeAsset.browser_download_url,
