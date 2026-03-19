@@ -39,14 +39,13 @@ export function UpdateButton() {
 
   if (status === 'downloading') {
     return (
-      <Button variant="secondary" disabled className="h-10 w-64 gap-2 px-3">
-        <span className="w-24">Downloading</span>
+      <Button variant="ghost" disabled className="h-10 w-64 gap-2 px-3 border-0 shadow-none">
+        <span className="w-24 text-foreground">Downloading</span>
         <Progress 
           value={progress} 
-          className="flex-1 h-2 bg-black/20"
-          indicatorClassName="bg-black"
+          className="flex-1 h-2"
         />
-        <span className="text-sm w-10 text-right">{Math.round(progress)}%</span>
+        <span className="text-sm w-10 text-right text-foreground">{Math.round(progress)}%</span>
       </Button>
     )
   }
