@@ -39,7 +39,7 @@ export function UpdateButton() {
 
   if (status === 'downloading') {
     return (
-      <Button variant="ghost" disabled className="h-10 w-64 gap-2 px-3 border-0">
+      <Button variant="ghost" disabled className="h-10 w-64 gap-2 px-3 border-0 shadow-none">
         <span className="w-24 text-foreground">Downloading</span>
         <Progress 
           value={progress} 
