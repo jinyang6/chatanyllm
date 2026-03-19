@@ -3,6 +3,7 @@ import { Toaster } from 'sonner'
 import { ProviderProvider, useProvider } from './contexts/ProviderContext'
 import { ConversationProvider, useConversation } from './contexts/ConversationContext'
 import { ErrorProvider } from './contexts/ErrorContext'
+import { UpdateProvider } from './contexts/UpdateContext'
 import TitleBar from './components/TitleBar'
 import Sidebar from './components/Sidebar'
 import ChatWindow from './components/ChatWindow'
@@ -69,44 +70,46 @@ function App() {
 
   return (
     <ErrorProvider>
-      <ProviderProvider>
-        <ConversationProvider>
-          {/* Signal Electron to show window when app is ready */}
-          <AppReadySignal />
+      <UpdateProvider>
+        <ProviderProvider>
+          <ConversationProvider>
+            {/* Signal Electron to show window when app is ready */}
+            <AppReadySignal />
 
-          <div className="flex flex-col h-screen bg-background overflow-hidden">
-            {/* Custom Title Bar (Electron only) */}
-            <TitleBar />
+            <div className="flex flex-col h-screen bg-background overflow-hidden">
+              {/* Custom Title Bar (Electron only) */}
+              <TitleBar />
 
-            {/* Main Content Area */}
-            <div className="flex flex-1 overflow-hidden">
-              {/* Collapsible Sidebar */}
-              <Sidebar
-                isOpen={sidebarOpen}
-                currentConversation={currentConversation}
-                onSelectConversation={setCurrentConversation}
-                onOpenSettings={() => setShowSettings(true)}
-              />
+              {/* Main Content Area */}
+              <div className="flex flex-1 overflow-hidden">
+                {/* Collapsible Sidebar */}
+                <Sidebar
+                  isOpen={sidebarOpen}
+                  currentConversation={currentConversation}
+                  onSelectConversation={setCurrentConversation}
+                  onOpenSettings={() => setShowSettings(true)}
+                />
 
-              {/* Main Chat Area */}
-              <ChatWindow
-                conversationId={currentConversation}
-                onOpenSettings={() => setShowSettings(true)}
-                sidebarOpen={sidebarOpen}
-                onToggleSidebar={() => setSidebarOpen(prev => !prev)}
-              />
+                {/* Main Chat Area */}
+                <ChatWindow
+                  conversationId={currentConversation}
+                  onOpenSettings={() => setShowSettings(true)}
+                  sidebarOpen={sidebarOpen}
+                  onToggleSidebar={() => setSidebarOpen(prev => !prev)}
+                />
 
-              {/* Settings Modal */}
-              {showSettings && (
-                <SettingsModal onClose={() => setShowSettings(false)} />
-              )}
+                {/* Settings Modal */}
+                {showSettings && (
+                  <SettingsModal onClose={() => setShowSettings(false)} />
+                )}
+              </div>
             </div>
-          </div>
 
-          {/* Toast Notifications */}
-          <Toaster richColors position="bottom-right" />
-        </ConversationProvider>
-      </ProviderProvider>
+            {/* Toast Notifications */}
+            <Toaster richColors position="bottom-right" />
+          </ConversationProvider>
+        </ProviderProvider>
+      </UpdateProvider>
     </ErrorProvider>
   )
 }

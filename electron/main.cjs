@@ -28,6 +28,8 @@ const { createWindow } = require('./window.cjs')
 const { registerFsHandlers } = require('./ipc/fs.cjs')
 const { registerStoreHandlers } = require('./ipc/store.cjs')
 const { registerShellHandlers } = require('./ipc/shell.cjs')
+const { registerUpdaterHandlers } = require('./ipc/updater.cjs')
+const { initAutoUpdater, setMainWindow } = require('./updater.cjs')
 
 const isDev = !app.isPackaged
 
@@ -46,6 +48,7 @@ if (process.platform === 'win32') {
 registerFsHandlers(ipcMain)
 registerStoreHandlers(ipcMain, app, safeStorage)
 registerShellHandlers(ipcMain, getMainWindow, shell, dialog)
+registerUpdaterHandlers(ipcMain)
 
 ipcMain.handle('get-app-data-path', () => app.getPath('userData'))
 
@@ -59,8 +62,10 @@ app.whenReady().then(() => {
     shell,
     ipcMain,
     isDev,
-    onWindowReady: (win) => { mainWindow = win }
+    onWindowReady: (win) => { mainWindow = win; setMainWindow(win) }
   })
+
+  initAutoUpdater()
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {

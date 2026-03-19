@@ -64,6 +64,44 @@ contextBridge.exposeInMainWorld('electronAPI', {
     const os = require('os')
     const buildNumber = parseInt(os.release().split('.')[2] || '0')
     return buildNumber >= 22000
+  },
+
+  // Auto-updater
+  updater: {
+    check: () => ipcRenderer.invoke('updater:check'),
+    download: () => ipcRenderer.invoke('updater:download'),
+    install: () => ipcRenderer.invoke('updater:install'),
+    getVersion: () => ipcRenderer.invoke('updater:version'),
+    onChecking: (callback) => {
+      const sub = (e) => callback()
+      ipcRenderer.on('updater:checking', sub)
+      return () => ipcRenderer.removeListener('updater:checking', sub)
+    },
+    onAvailable: (callback) => {
+      const sub = (e, info) => callback(info)
+      ipcRenderer.on('updater:available', sub)
+      return () => ipcRenderer.removeListener('updater:available', sub)
+    },
+    onNotAvailable: (callback) => {
+      const sub = (e, info) => callback(info)
+      ipcRenderer.on('updater:not-available', sub)
+      return () => ipcRenderer.removeListener('updater:not-available', sub)
+    },
+    onError: (callback) => {
+      const sub = (e, err) => callback(err)
+      ipcRenderer.on('updater:error', sub)
+      return () => ipcRenderer.removeListener('updater:error', sub)
+    },
+    onProgress: (callback) => {
+      const sub = (e, progress) => callback(progress)
+      ipcRenderer.on('updater:progress', sub)
+      return () => ipcRenderer.removeListener('updater:progress', sub)
+    },
+    onDownloaded: (callback) => {
+      const sub = (e, info) => callback(info)
+      ipcRenderer.on('updater:downloaded', sub)
+      return () => ipcRenderer.removeListener('updater:downloaded', sub)
+    }
   }
 })
 

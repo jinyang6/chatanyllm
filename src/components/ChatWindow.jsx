@@ -19,6 +19,7 @@ import { formatMessageForAPI, formatMessagesForAPI } from '@/utils/messageFormat
 import { isThinkingModel, isImageGenerationModel, getModalitiesForModel } from '@/core/model/ModelUtils'
 import { handleStreamingError } from '@/utils/errorHandlers'
 import { createStreamingCallbacks } from '@/utils/streamingHelpers'
+import { UpdateButton } from './UpdateButton'
 
 // ─── ChatHeader ───────────────────────────────────────────────────────────────
 
@@ -144,6 +145,11 @@ const ChatHeader = memo(({
           >
             <RefreshCwIcon className={`h-5 w-5 ${fetchStatus.loading ? 'animate-spin' : ''}`} />
           </Button>
+        </div>
+
+        {/* Update Button - Outside the bordered container */}
+        <div className="ml-auto flex items-center">
+          <UpdateButton />
         </div>
       </div>
     </div>
