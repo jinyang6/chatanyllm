@@ -1,6 +1,6 @@
 # ChatAnyLLM
 
-A desktop chat application for interacting with multiple AI language models through a unified interface.
+A desktop chat application that connects to any AI provider and agentic system via OpenAI-compatible APIs.
 
 **[Visit Website](https://jinyang6.github.io/chatanyllm/)**
 
@@ -14,7 +14,7 @@ A desktop chat application for interacting with multiple AI language models thro
 - **Local & Secure** - All conversations stored locally, API keys encrypted with Windows DPAPI
 - **Rich Formatting** - Markdown, code syntax highlighting, LaTeX math equations
 - **Image Support** - Paste and preview images in conversations
-- **Custom Providers** - Add any OpenAI-compatible API endpoint
+- **Custom Providers** - Add any AI provider or agentic system (e.g., OpenClaw) via OpenAI-compatible APIs
 
 ## Installation
 
