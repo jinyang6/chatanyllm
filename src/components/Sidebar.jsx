@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
@@ -19,6 +19,42 @@ function Sidebar({ isOpen, currentConversation, onSelectConversation, onOpenSett
   const [editingConv, setEditingConv] = useState(null)
   const [editTitle, setEditTitle] = useState('')
   const [deletingConv, setDeletingConv] = useState(null)
+  const conversationRefsMap = useRef(new Map())
+  const scrollAreaRef = useRef(null)
+  const wasSidebarClosedRef = useRef(true)
+
+  // Set conversation element ref with automatic cleanup
+  const setConversationRef = useCallback((convId, el) => {
+    el ? conversationRefsMap.current.set(convId, el) : conversationRefsMap.current.delete(convId)
+  }, [])
+
+  // Scroll to current conversation when sidebar opens
+  useEffect(() => {
+    if (!isOpen || !currentConversationId) return
+
+    const scrollArea = scrollAreaRef.current
+    const viewport = scrollArea?.querySelector('[data-radix-scroll-area-viewport]')
+    const convElement = conversationRefsMap.current.get(currentConversationId)
+    if (!viewport || !convElement) return
+
+    const viewportRect = viewport.getBoundingClientRect()
+    const elementRect = convElement.getBoundingClientRect()
+    const targetScrollTop = viewport.scrollTop + elementRect.top - viewportRect.top - (viewportRect.height - elementRect.height) / 2
+
+    viewport.scrollTo({ top: targetScrollTop, behavior: wasSidebarClosedRef.current ? 'instant' : 'smooth' })
+    wasSidebarClosedRef.current = false
+  }, [isOpen, currentConversationId])
+
+  // Mark sidebar as closed when it closes
+  useEffect(() => {
+    if (!isOpen) wasSidebarClosedRef.current = true
+  }, [isOpen])
+
+  // Clean up refs when conversations list changes
+  useEffect(() => {
+    const activeIds = new Set(conversations.map(c => c.id))
+    conversationRefsMap.current.forEach((_, id) => !activeIds.has(id) && conversationRefsMap.current.delete(id))
+  }, [conversations])
 
   // Format timestamp for display
   const formatTimestamp = (isoString) => {
@@ -37,73 +73,59 @@ function Sidebar({ isOpen, currentConversation, onSelectConversation, onOpenSett
       : date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
   }
 
-  const handleNewConversation = async () => {
+  const handleNewConversation = useCallback(async () => {
     await startNewConversation()
-  }
+  }, [startNewConversation])
 
-  const handleSelectConversation = (conversationID) => {
-    // Find the conversation being selected
-    const conversation = conversations.find(c => c.id ===conversationID)
+  const handleSelectConversation = useCallback((conversationID) => {
+    const conversation = conversations.find(c => c.id === conversationID)
+    if (!conversation) return
 
-    // Switch to the provider that was last used in this conversation
-    if (conversation && conversation.provider) {
-      // Check if the provider still exists (built-in or custom)
+    if (conversation.provider) {
       const allProviders = [...PROVIDERS, ...customProviders]
       const providerExists = allProviders.some(p => p.id === conversation.provider)
-
-      if (providerExists) {
-        setProvider(conversation.provider)
-      } else {
-        // Provider no longer exists, fallback to first available provider
-        const fallbackProvider = PROVIDERS[0].id
-        setProvider(fallbackProvider)
-      }
+      setProvider(providerExists ? conversation.provider : PROVIDERS[0].id)
     }
 
     selectConversation(conversationID)
-    if (onSelectConversation) {
-      onSelectConversation(conversationID)
-    }
-  }
+    onSelectConversation?.(conversationID)
+  }, [conversations, customProviders, setProvider, selectConversation, onSelectConversation])
 
-  const handleEditClick = (conv) => {
+  const handleEditClick = useCallback((conv) => {
     setEditingConv(conv)
     setEditTitle(conv.title)
-  }
+  }, [])
 
-  const handleSaveEdit = async () => {
-    if (editingConv && editTitle.trim()) {
-      await updateConversationTitle(editingConv.id, editTitle.trim())
-      setEditingConv(null)
-      setEditTitle('')
-    }
-  }
-
-  const handleCancelEdit = () => {
+  const handleSaveEdit = useCallback(async () => {
+    if (!editingConv?.id || !editTitle.trim()) return
+    await updateConversationTitle(editingConv.id, editTitle.trim())
     setEditingConv(null)
     setEditTitle('')
-  }
+  }, [editingConv, editTitle, updateConversationTitle])
 
-  const handleDeleteClick = (conv) => {
+  const handleCancelEdit = useCallback(() => {
+    setEditingConv(null)
+    setEditTitle('')
+  }, [])
+
+  const handleDeleteClick = useCallback((conv) => {
     setDeletingConv(conv)
-  }
+  }, [])
 
-  const handleConfirmDelete = async () => {
-    if (deletingConv) {
-      console.log('Sidebar: Initiating deletion for conversation:', deletingConv.id)
-      try {
-        await deleteConversation(deletingConv.id)
-        console.log('Sidebar: Deletion completed successfully')
-      } catch (error) {
-        console.error('Sidebar: Deletion failed:', error)
-      }
+  const handleConfirmDelete = useCallback(async () => {
+    if (!deletingConv?.id) return
+    try {
+      await deleteConversation(deletingConv.id)
+    } catch (error) {
+      console.error('Failed to delete conversation:', error)
+    } finally {
       setDeletingConv(null)
     }
-  }
+  }, [deletingConv, deleteConversation])
 
-  const handleCancelDelete = () => {
+  const handleCancelDelete = useCallback(() => {
     setDeletingConv(null)
-  }
+  }, [])
 
   return (
     <div
@@ -137,13 +159,15 @@ function Sidebar({ isOpen, currentConversation, onSelectConversation, onOpenSett
       </div>
 
       {/* Conversations List */}
-      <ScrollArea className={`flex-1 ${isOpen ? 'px-3' : 'px-2'}`}>
-        <div className="space-y-2 py-2">
-          {isOpen && conversations.map((conv) => (
-            // Full conversation item with hover actions (expanded state)
-            <div key={conv.id} className="group w-full">
+      {isOpen && (
+        <ScrollArea ref={scrollAreaRef} className="flex-1 px-3">
+          <div className="space-y-2 py-2">
+            {conversations.map((conv) => (
+              // Full conversation item with hover actions (expanded state)
+              <div key={conv.id} className="group w-full">
                 <div
                   onClick={() => handleSelectConversation(conv.id)}
+                  ref={(el) => setConversationRef(conv.id, el)}
                   className={`
                     flex items-center gap-3 w-full rounded-md py-4 pl-4 pr-2
                     cursor-pointer transition-colors
@@ -199,9 +223,10 @@ function Sidebar({ isOpen, currentConversation, onSelectConversation, onOpenSett
                   </div>
                 </div>
               </div>
-          ))}
-        </div>
-      </ScrollArea>
+            ))}
+          </div>
+        </ScrollArea>
+      )}
 
       {/* Settings Button */}
       <div className={`border-t ${isOpen ? 'p-4' : 'p-2'}`}>
