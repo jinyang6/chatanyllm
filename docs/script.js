@@ -34,7 +34,9 @@ async function fetchGitHubDownloads() {
     let totalDownloads = 0;
     releases.forEach(release => {
       release.assets.forEach(asset => {
-        totalDownloads += asset.download_count;
+        if (asset.name.endsWith('.exe') && asset.name.includes('Setup')) {
+          totalDownloads += asset.download_count;
+        }
       });
     });
 
