@@ -130,106 +130,108 @@ function Sidebar({ isOpen, currentConversation, onSelectConversation, onOpenSett
   return (
     <div
       className={`
-        border-r flex flex-col h-full bg-muted/20 transition-all duration-300 ease-in-out flex-shrink-0
+        border-r flex flex-col h-full transition-all duration-300 ease-in-out flex-shrink-0
         ${isOpen ? 'w-80 min-w-[320px]' : 'w-16 min-w-[64px]'}
       `}
+      style={{ backgroundColor: '#F9F9F9' }}
     >
-      {/* New Conversation Button */}
-      <div className={`${isOpen ? 'p-4' : 'p-2'}`}>
-        {isOpen ? (
-          <Button className="w-full h-11" variant="outline" onClick={handleNewConversation}>
-            <PlusIcon className="mr-2 h-5 w-5" />
-            <span className="text-base font-medium">New Conversation</span>
-          </Button>
-        ) : (
-          <TooltipProvider>
-            <Tooltip delayDuration={200}>
-              <TooltipTrigger asChild>
-                <Button className="w-full h-11" variant="outline" size="icon" onClick={handleNewConversation}>
-                  <PlusIcon className="h-5 w-5" />
-                  <span className="sr-only">New Conversation</span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="right">
-                <p className="font-medium">New Conversation</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+      {/* New Conversation Button Container */}
+      <div className="sidebar-header" style={{ borderBottom: '1px solid transparent' }}>
+        <div className={`${isOpen ? 'p-4' : 'p-2'}`}>
+          {isOpen ? (
+            <Button className="w-full h-11" variant="outline" onClick={handleNewConversation}>
+              <PlusIcon className="mr-2 h-5 w-5" />
+              <span className="text-base font-medium">New Conversation</span>
+            </Button>
+          ) : (
+            <TooltipProvider>
+              <Tooltip delayDuration={200}>
+                <TooltipTrigger asChild>
+                  <Button className="w-full h-11" variant="outline" size="icon" onClick={handleNewConversation}>
+                    <PlusIcon className="h-5 w-5" />
+                    <span className="sr-only">New Conversation</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  <p className="font-medium">New Conversation</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+        </div>
+      </div>
+
+      {/* Conversations List Container */}
+      <div className="sidebar-content flex-1 overflow-hidden" style={{ borderTop: '1px solid transparent' }}>
+        {isOpen && (
+          <ScrollArea ref={scrollAreaRef} className="h-full px-3">
+            <div className="space-y-2 py-2">
+              {conversations.map((conv) => (
+                <div key={conv.id} className="group w-full">
+                  <div
+                    onClick={() => handleSelectConversation(conv.id)}
+                    ref={(el) => setConversationRef(conv.id, el)}
+                    className={`
+                      flex items-center gap-3 w-full rounded-md py-4 pl-4 pr-2
+                      cursor-pointer transition-colors
+                      ${currentConversationId === conv.id
+                        ? 'bg-accent text-secondary-foreground'
+                        : 'hover:bg-accent hover:text-accent-foreground'}
+                    `}
+                  >
+                    <MessageSquareIcon className="h-5 w-5 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-base font-medium leading-snug">
+                        {conv.title.length > 16 ? conv.title.substring(0, 16) + '...' : conv.title}
+                      </p>
+                      <p className="text-sm text-muted-foreground mt-1">{formatTimestamp(conv.updatedAt)}</p>
+                    </div>
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-9 w-9"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <MoreVerticalIcon className="h-5 w-5" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-44">
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleEditClick(conv)
+                            }}
+                          >
+                            <PencilIcon className="h-4 w-4 mr-3" />
+                            <span className="text-sm">Rename</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleDeleteClick(conv)
+                            }}
+                            className="text-destructive focus:text-destructive"
+                          >
+                            <TrashIcon className="h-4 w-4 mr-3" />
+                            <span className="text-sm">Delete</span>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
         )}
       </div>
 
-      {/* Conversations List */}
-      {isOpen && (
-        <ScrollArea ref={scrollAreaRef} className="flex-1 px-3">
-          <div className="space-y-2 py-2">
-            {conversations.map((conv) => (
-              // Full conversation item with hover actions (expanded state)
-              <div key={conv.id} className="group w-full">
-                <div
-                  onClick={() => handleSelectConversation(conv.id)}
-                  ref={(el) => setConversationRef(conv.id, el)}
-                  className={`
-                    flex items-center gap-3 w-full rounded-md py-4 pl-4 pr-2
-                    cursor-pointer transition-colors
-                    ${currentConversationId === conv.id
-                      ? 'bg-accent text-secondary-foreground'
-                      : 'hover:bg-accent hover:text-accent-foreground'}
-                  `}
-                >
-                  {/* Title section - left side */}
-                  <MessageSquareIcon className="h-5 w-5 flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-base font-medium leading-snug">
-                      {conv.title.length > 16 ? conv.title.substring(0, 16) + '...' : conv.title}
-                    </p>
-                    <p className="text-sm text-muted-foreground mt-1">{formatTimestamp(conv.updatedAt)}</p>
-                  </div>
-
-                  {/* Menu button - right side, visible on hover */}
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-9 w-9"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <MoreVerticalIcon className="h-5 w-5" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-44">
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleEditClick(conv)
-                          }}
-                        >
-                          <PencilIcon className="h-4 w-4 mr-3" />
-                          <span className="text-sm">Rename</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleDeleteClick(conv)
-                          }}
-                          className="text-destructive focus:text-destructive"
-                        >
-                          <TrashIcon className="h-4 w-4 mr-3" />
-                          <span className="text-sm">Delete</span>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </ScrollArea>
-      )}
-
-      {/* Settings Button */}
-      <div className={`border-t ${isOpen ? 'p-4' : 'p-2'}`}>
+      {/* Settings Button Container */}
+      <div className="sidebar-footer border-t">
+        <div className={`${isOpen ? 'p-4' : 'p-2'}`}>
         {isOpen ? (
           <Button
             variant="ghost"
@@ -259,6 +261,7 @@ function Sidebar({ isOpen, currentConversation, onSelectConversation, onOpenSett
             </Tooltip>
           </TooltipProvider>
         )}
+      </div>
       </div>
 
       {/* Edit Title Dialog */}
