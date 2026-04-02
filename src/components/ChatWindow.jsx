@@ -14,7 +14,7 @@ import { useConversation } from '@/contexts/ConversationContext'
 import { useModelFetcher, ERROR_TYPES } from '@/hooks/useModelFetcher'
 import { useError } from '@/contexts/ErrorContext'
 import { sendMessage as sendStreamingMessage } from '@/core/chat/ChatManager'
-import { RefreshCw as RefreshCwIcon, AlertTriangle as AlertTriangleIcon, WifiOff as WifiOffIcon, Key as KeyIcon, PanelLeftClose as ChevronsLeftIcon, PanelLeftOpen as ChevronsRightIcon } from 'lucide-react'
+import { RefreshCw as RefreshCwIcon, AlertTriangle as AlertTriangleIcon, WifiOff as WifiOffIcon, Key as KeyIcon } from 'lucide-react'
 import { formatMessageForAPI, formatMessagesForAPI } from '@/utils/messageFormatters'
 import { isThinkingModel, isImageGenerationModel, getModalitiesForModel } from '@/core/model/ModelUtils'
 import { handleStreamingError } from '@/utils/errorHandlers'
@@ -30,47 +30,15 @@ const ChatHeader = memo(({
   currentModels,
   fetchStatus,
   usingFallback,
-  sidebarOpen,
-  onToggleSidebar,
   onProviderChange,
   onModelChange,
   onRefreshModels,
 }) => {
   return (
-    <div className="border-b px-6 py-4 bg-muted/10">
+    <div className="border-b border-transparent px-6 py-4 bg-muted/10 shadow-[0_2px_4px_rgba(0,0,0,0.08)]">
       <div className="flex items-center gap-6">
-        {/* Sidebar Toggle Button */}
-        <TooltipProvider delayDuration={300}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onToggleSidebar}
-                className="h-16 w-16 flex-shrink-0"
-              >
-                {sidebarOpen ? (
-                  <ChevronsLeftIcon size={28} />
-                ) : (
-                  <ChevronsRightIcon size={28} />
-                )}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right" sideOffset={8} className="font-medium">
-              <p className="text-sm">
-                {sidebarOpen ? 'Collapse' : 'Expand'} sidebar
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                <kbd className="inline-flex h-4 select-none items-center gap-1 rounded border bg-muted px-1 font-mono text-[10px] font-medium">
-                  {navigator.platform.includes('Mac') ? '⌘B' : 'Ctrl+B'}
-                </kbd>
-              </p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-
         {/* Provider/Model Selection Container */}
-        <div className="border rounded-xl p-3 flex items-center gap-3 w-fit shadow-sm bg-background">
+        <div className="border rounded-xl p-3 flex items-center gap-3 w-fit bg-background">
           <Badge variant="secondary" className="text-sm px-3 py-1 bg-muted text-foreground hover:bg-muted pointer-events-none">Provider</Badge>
           <SearchableSelect
             value={provider}
@@ -104,7 +72,7 @@ const ChatHeader = memo(({
             }
             searchPlaceholder="Search models..."
             showDescription={true}
-            className="h-10 min-w-[240px] text-base"
+            className="h-10 min-w-[180px] text-base"
             loading={fetchStatus.loading}
             error={fetchStatus.error}
           />
@@ -158,7 +126,7 @@ const ChatHeader = memo(({
 
 // ─── ChatWindow ───────────────────────────────────────────────────────────────
 
-function ChatWindow({ conversationId, onOpenSettings, sidebarOpen, onToggleSidebar }) {
+function ChatWindow({ conversationId, onOpenSettings }) {
   const {
     provider,
     setProvider,
@@ -265,20 +233,18 @@ function ChatWindow({ conversationId, onOpenSettings, sidebarOpen, onToggleSideb
     autoFetchModels()
   }, [provider, hasApiKey, isLoading])
 
-  const getModalitiesForCurrentModel = (modelId, providerId = null) => {
+  const getModelsForCurrentProvider = (providerId = null) => {
     const targetProvider = providerId || provider
     const fetched = getModelsForProvider(targetProvider)
-    const fallback = getFallbackModels(targetProvider)
-    const models = fetched.length > 0 ? fetched : fallback
-    return getModalitiesForModel(modelId, models)
+    return fetched.length > 0 ? fetched : getFallbackModels(targetProvider)
+  }
+
+  const getModalitiesForCurrentModel = (modelId, providerId = null) => {
+    return getModalitiesForModel(modelId, getModelsForCurrentProvider(providerId))
   }
 
   const isModelThinking = (modelId, providerId = null) => {
-    const targetProvider = providerId || provider
-    const fetched = getModelsForProvider(targetProvider)
-    const fallback = getFallbackModels(targetProvider)
-    const models = fetched.length > 0 ? fetched : fallback
-    return isThinkingModel(modelId, models)
+    return isThinkingModel(modelId, getModelsForCurrentProvider(providerId))
   }
 
   // Restore conversation's last used model when switching conversations
@@ -653,8 +619,6 @@ function ChatWindow({ conversationId, onOpenSettings, sidebarOpen, onToggleSideb
         currentModels={currentModels}
         fetchStatus={fetchStatus}
         usingFallback={usingFallback}
-        sidebarOpen={sidebarOpen}
-        onToggleSidebar={onToggleSidebar}
         onProviderChange={handleProviderChange}
         onModelChange={handleModelChange}
         onRefreshModels={handleRefreshModels}

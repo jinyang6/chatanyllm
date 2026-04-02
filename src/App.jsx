@@ -85,17 +85,16 @@ function App() {
                 {/* Collapsible Sidebar */}
                 <Sidebar
                   isOpen={sidebarOpen}
-                  currentConversation={currentConversation}
                   onSelectConversation={setCurrentConversation}
                   onOpenSettings={() => setShowSettings(true)}
+                  sidebarOpen={sidebarOpen}
+                  onToggleSidebar={() => setSidebarOpen(prev => !prev)}
                 />
 
                 {/* Main Chat Area */}
                 <ChatWindow
                   conversationId={currentConversation}
                   onOpenSettings={() => setShowSettings(true)}
-                  sidebarOpen={sidebarOpen}
-                  onToggleSidebar={() => setSidebarOpen(prev => !prev)}
                 />
 
                 {/* Settings Modal */}

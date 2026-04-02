@@ -2,18 +2,19 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { Separator } from '@/components/ui/separator'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Plus as PlusIcon, Settings as SettingsIcon, MessageSquare as MessageSquareIcon, Pencil as PencilIcon, Trash as TrashIcon, MoreVertical as MoreVerticalIcon } from 'lucide-react'
+import { Plus as PlusIcon, Settings as SettingsIcon, MessageSquare as MessageSquareIcon, Pencil as PencilIcon, Trash as TrashIcon, MoreVertical as MoreVerticalIcon, PanelLeftClose as ChevronsLeftIcon, PanelLeftOpen as ChevronsRightIcon } from 'lucide-react'
 import { useConversation } from '@/contexts/ConversationContext'
 import { useProvider } from '@/contexts/ProviderContext'
 import { PROVIDERS } from '@/config/providers'
 
-function Sidebar({ isOpen, currentConversation, onSelectConversation, onOpenSettings }) {
+function Sidebar({ isOpen, onSelectConversation, onOpenSettings, sidebarOpen, onToggleSidebar }) {
   const { conversations, currentConversationId, startNewConversation, selectConversation, updateConversationTitle, deleteConversation } = useConversation()
-  const { setProvider, customProviders } = useProvider()
+  const { setProvider, customProviders, provider } = useProvider()
 
 
   const [editingConv, setEditingConv] = useState(null)
@@ -73,10 +74,6 @@ function Sidebar({ isOpen, currentConversation, onSelectConversation, onOpenSett
       : date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
   }
 
-  const handleNewConversation = useCallback(async () => {
-    await startNewConversation()
-  }, [startNewConversation])
-
   const handleSelectConversation = useCallback((conversationID) => {
     const conversation = conversations.find(c => c.id === conversationID)
     if (!conversation) return
@@ -130,16 +127,52 @@ function Sidebar({ isOpen, currentConversation, onSelectConversation, onOpenSett
   return (
     <div
       className={`
-        border-r flex flex-col h-full transition-all duration-300 ease-in-out flex-shrink-0
-        ${isOpen ? 'w-80 min-w-[320px]' : 'w-16 min-w-[64px]'}
+        flex flex-col h-full transition-all duration-300 ease-in-out flex-shrink-0 rounded-l-lg
+        ${isOpen ? 'w-80 shadow-lg' : 'w-16'}
       `}
       style={{ backgroundColor: '#F9F9F9' }}
     >
-      {/* New Conversation Button Container */}
-      <div className="sidebar-header" style={{ borderBottom: '1px solid transparent' }}>
-        <div className={`${isOpen ? 'p-4' : 'p-2'}`}>
+      {/* Sidebar Toggle and New Conversation Container */}
+      <div className={`sidebar-header flex flex-col items-center p-2 gap-2 ${isOpen ? '' : 'shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1)] rounded-b-lg'}`}>
+        <div className="w-full flex items-center justify-between">
+          {isOpen && provider && (
+            <span className="text-4xl font-semibold text-muted-foreground truncate flex-1">
+              {PROVIDERS.find(p => p.id === provider)?.name || customProviders.find(p => p.id === provider)?.name || provider}
+            </span>
+          )}
+          <TooltipProvider delayDuration={300}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onToggleSidebar}
+                  className="h-11 w-12 flex-shrink-0"
+                >
+                  {sidebarOpen ? (
+                    <ChevronsLeftIcon className="h-8 w-8" />
+                  ) : (
+                    <ChevronsRightIcon className="h-8 w-8" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right" sideOffset={8} className="font-medium">
+                <p className="text-sm">
+                  {sidebarOpen ? 'Collapse' : 'Expand'} sidebar
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  <kbd className="inline-flex h-4 select-none items-center gap-1 rounded border bg-muted px-1 font-mono text-[10px] font-medium">
+                    {navigator.platform.includes('Mac') ? '⌘B' : 'Ctrl+B'}
+                  </kbd>
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+        {!isOpen && <Separator orientation="horizontal" className="w-full" />}
+        <div className="w-full">
           {isOpen ? (
-            <Button className="w-full h-11" variant="outline" onClick={handleNewConversation}>
+            <Button className="w-full h-11" variant="outline" onClick={startNewConversation}>
               <PlusIcon className="mr-2 h-5 w-5" />
               <span className="text-base font-medium">New Conversation</span>
             </Button>
@@ -147,13 +180,13 @@ function Sidebar({ isOpen, currentConversation, onSelectConversation, onOpenSett
             <TooltipProvider>
               <Tooltip delayDuration={200}>
                 <TooltipTrigger asChild>
-                  <Button className="w-full h-11" variant="outline" size="icon" onClick={handleNewConversation}>
+                  <Button className="w-full h-11" variant="outline" size="icon" onClick={startNewConversation}>
                     <PlusIcon className="h-5 w-5" />
                     <span className="sr-only">New Conversation</span>
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="right">
-                  <p className="font-medium">New Conversation</p>
+                  <p className="font-medium text-sm">New Conversation</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -162,7 +195,7 @@ function Sidebar({ isOpen, currentConversation, onSelectConversation, onOpenSett
       </div>
 
       {/* Conversations List Container */}
-      <div className="sidebar-content flex-1 overflow-hidden" style={{ borderTop: '1px solid transparent' }}>
+      <div className="sidebar-content flex-1 overflow-hidden">
         {isOpen && (
           <ScrollArea ref={scrollAreaRef} className="h-full px-3">
             <div className="space-y-2 py-2">
@@ -181,7 +214,7 @@ function Sidebar({ isOpen, currentConversation, onSelectConversation, onOpenSett
                   >
                     <MessageSquareIcon className="h-5 w-5 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-base font-medium leading-snug">
+                      <p className="text-base font-medium leading-snug truncate">
                         {conv.title.length > 16 ? conv.title.substring(0, 16) + '...' : conv.title}
                       </p>
                       <p className="text-sm text-muted-foreground mt-1">{formatTimestamp(conv.updatedAt)}</p>
@@ -230,7 +263,7 @@ function Sidebar({ isOpen, currentConversation, onSelectConversation, onOpenSett
       </div>
 
       {/* Settings Button Container */}
-      <div className="sidebar-footer border-t">
+      <div className={`sidebar-footer ${isOpen ? 'border-t rounded-t-lg' : ''}`}>
         <div className={`${isOpen ? 'p-4' : 'p-2'}`}>
         {isOpen ? (
           <Button
