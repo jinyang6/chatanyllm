@@ -12,7 +12,15 @@ function MessageList({ messages, onRetry, onEditUserMessage, onDeleteMessage, is
   const [deletingMessageId, setDeletingMessageId] = useState(null)
   const deleteTimeoutRef = useRef(null)
   const messagesEndRef = useRef(null)
+  const scrollAreaRef = useRef(null)
   const prevFirstMessageIdRef = useRef(null)
+
+  const scrollToBottom = useCallback((behavior = 'smooth') => {
+    const viewport = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]')
+    if (viewport) {
+      viewport.scrollTo({ top: viewport.scrollHeight, behavior })
+    }
+  }, [])
   const [collapsedMessages, setCollapsedMessages] = useState(new Set())
   const [expandedThinking, setExpandedThinking] = useState(new Set())
   const processedMessagesRef = useRef(new Set())
@@ -76,19 +84,19 @@ function MessageList({ messages, onRetry, onEditUserMessage, onDeleteMessage, is
     }
   }, [deletingMessageId])
 
-  // Auto-scroll to last message when conversation changes
+  // Auto-scroll to bottom when conversation changes
   useEffect(() => {
     const firstMessageId = messages[0]?.id
     const isConversationChange = firstMessageId &&
       prevFirstMessageIdRef.current !== null &&
       prevFirstMessageIdRef.current !== firstMessageId
 
-    if (isConversationChange && messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' })
+    if (isConversationChange) {
+      scrollToBottom('instant')
     }
 
     prevFirstMessageIdRef.current = firstMessageId
-  }, [messages])
+  }, [messages, scrollToBottom])
 
   const handleDeleteClick = useCallback((messageId) => {
     if (deletingMessageId === messageId) {
@@ -149,8 +157,9 @@ function MessageList({ messages, onRetry, onEditUserMessage, onDeleteMessage, is
   ), [messages])
 
   return (
-    <ScrollArea className="flex-1">
-      <div className="max-w-5xl mx-auto px-6 py-8 space-y-8">
+    <div className="flex-1 min-h-0 overflow-hidden">
+      <ScrollArea ref={scrollAreaRef} className="h-full w-full">
+        <div className="max-w-5xl mx-auto px-6 py-8 pb-36 space-y-8">
         {messages.map((message, index) => {
           const isLastMessage = index === messages.length - 1
           const isLastUserMessage = message.role === 'user' && index === lastUserMessageIndex
@@ -204,6 +213,7 @@ function MessageList({ messages, onRetry, onEditUserMessage, onDeleteMessage, is
         onDownload={downloadImage}
       />
     </ScrollArea>
+    </div>
   )
 }
 

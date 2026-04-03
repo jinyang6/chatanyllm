@@ -20,6 +20,7 @@ export function UpdateProvider({ children }) {
       try {
         const v = await window.electronAPI.updater.getVersion()
         setCurrentVersion(v)
+        console.log(`[Updater] Current version: ${v}`)
         setUpdateState(prev => ({ ...prev, status: 'checking' }))
         await window.electronAPI.updater.check()
       } catch (err) {
@@ -38,6 +39,7 @@ export function UpdateProvider({ children }) {
     })
 
     const unsubAvailable = window.electronAPI.updater.onAvailable((info) => {
+      console.log(`[Updater] ${currentVersion} -> ${info.version} (update available)`)
       setUpdateState({
         status: 'available',
         version: info.version,
@@ -47,7 +49,8 @@ export function UpdateProvider({ children }) {
       })
     })
 
-    const unsubNotAvailable = window.electronAPI.updater.onNotAvailable(() => {
+    const unsubNotAvailable = window.electronAPI.updater.onNotAvailable((info) => {
+      console.log(`[Updater] ${currentVersion} -> ${info.version || currentVersion} (up to date)`)
       setUpdateState(prev => ({ ...prev, status: 'up-to-date' }))
     })
 

@@ -166,16 +166,17 @@ function MessageInput({ onSendMessage, isStreaming = false, onStopGeneration, di
   const canSend = (message.trim().length > 0 || attachments.length > 0) && !isDisabled
 
   return (
-    <div className="border-t bg-background">
-      <div className="max-w-4xl mx-auto px-6 py-4">
-        <form onSubmit={handleSubmit} className="relative">
+    <div className="absolute bottom-0 left-0 right-0">
+      <div className="w-[90%] max-w-3xl min-w-[500px] mx-auto mb-4 p-3 rounded-2xl border border-muted shadow-lg -translate-x-8" style={{ backgroundColor: '#F9F9F9' }}>
+        <form onSubmit={handleSubmit} className="relative flex flex-col">
           {/* Attachments Preview */}
           <AttachmentList
             attachments={attachments}
             onRemove={handleRemoveAttachment}
           />
 
-          <div className="relative flex items-center gap-2 rounded-xl border-2 bg-background shadow-md transition-all focus-within:border-ring focus-within:shadow-lg p-3">
+          <div className="w-full">
+            <div className="relative flex items-center gap-2 rounded-xl border-2 shadow-md transition-all focus-within:border-ring focus-within:shadow-lg p-3">
             {/* Hidden File Input */}
             <input
               ref={fileInputRef}
@@ -221,6 +222,7 @@ function MessageInput({ onSendMessage, isStreaming = false, onStopGeneration, di
                   : 'Send a message... (Shift+Enter for new line, Ctrl+V to paste images)'
               }
               disabled={isDisabled}
+              maxLength={16000}
               className="min-h-[44px] max-h-[400px] resize-none border-0 bg-transparent px-4 py-3.5 text-base md:text-base font-normal text-black dark:text-white leading-[1.5] antialiased shadow-none focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-50 flex-1"
               rows={1}
             />
@@ -287,6 +289,7 @@ function MessageInput({ onSendMessage, isStreaming = false, onStopGeneration, di
               </kbd>{' '}
               for new line
             </span>
+          </div>
           </div>
         </form>
       </div>
