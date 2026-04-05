@@ -14,6 +14,13 @@ const TEXT_BASED_EXTENSIONS = new Set([
   'hs', 'scala', 'groovy', 'gradle', 'bat', 'ps1', 'vbs', 'ahk'
 ])
 
+// File types that use OpenAI's type: 'file' format with file_data
+// OpenRouter and other OpenAI-compatible providers support this for PDFs, docs, etc.
+const FILE_TYPE_EXTENSIONS = new Set([
+  'pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'xlsb',
+  'odt', 'odp', 'ods', 'rtf', 'pages'
+])
+
 // Max text file size before warning (500KB)
 const MAX_TEXT_FILE_SIZE = 500 * 1024
 
@@ -35,6 +42,15 @@ function getFileExtension(filename) {
  */
 export function isTextBasedFile(filename) {
   return TEXT_BASED_EXTENSIONS.has(getFileExtension(filename))
+}
+
+/**
+ * Check if a file should be sent as type: 'file' (OpenAI file input format)
+ * @param {string} filename
+ * @returns {boolean}
+ */
+export function isFileTypeFile(filename) {
+  return FILE_TYPE_EXTENSIONS.has(getFileExtension(filename))
 }
 
 /**
@@ -110,6 +126,16 @@ export async function formatMessageForAPI(message, attachments = []) {
       contentParts.push({
         type: 'text',
         text: `[File Attached: ${attachment.name}]\n\`\`\`${language}\n${displayContent}\n\`\`\``
+      })
+    } else if (isFileTypeFile(attachment.name)) {
+      // Send as OpenAI type: 'file' format — supported by OpenRouter and other providers
+      // OpenRouter auto-parses these files (PDFs, docs, spreadsheets)
+      contentParts.push({
+        type: 'file',
+        file: {
+          filename: attachment.name,
+          file_data: attachment.data  // base64 data URL
+        }
       })
     } else {
       // Binary or unsupported file - send placeholder only
