@@ -252,8 +252,11 @@ function ChatWindow({ conversationId, onOpenSettings }) {
       attachments
     )
 
+    // Get fresh messages from conversation state (not stale closure)
+    const freshMessages = getCurrentConversation()?.messages || []
+
     const messagesForApi = [
-      ...(await formatMessagesForAPI(messages)),
+      ...(await formatMessagesForAPI(freshMessages)),
       currentUserMessage
     ]
 
@@ -310,10 +313,13 @@ function ChatWindow({ conversationId, onOpenSettings }) {
   const handleRetry = async (assistantMessage) => {
     if (isConversationStreaming(currentConversationId)) return
 
-    const messageIndex = messages.findIndex(m => m.id === assistantMessage.id)
+    // Get fresh messages from conversation state (not stale closure)
+    const freshMessages = getCurrentConversation()?.messages || []
+
+    const messageIndex = freshMessages.findIndex(m => m.id === assistantMessage.id)
     if (messageIndex <= 0) return
 
-    const userMessage = messages[messageIndex - 1]
+    const userMessage = freshMessages[messageIndex - 1]
     if (userMessage.role !== 'user') return
 
     const apiKey = apiKeys[provider]
@@ -327,7 +333,7 @@ function ChatWindow({ conversationId, onOpenSettings }) {
     const currentModel = latestModelRef.current
     const currentProvider = latestProviderRef.current
 
-    const messagesForApi = formatMessagesForAPI(messages.slice(0, messageIndex))
+    const messagesForApi = await formatMessagesForAPI(freshMessages.slice(0, messageIndex))
 
     const clearMetadata = {
       timestamp: new Date().toISOString(),
@@ -390,7 +396,10 @@ function ChatWindow({ conversationId, onOpenSettings }) {
     const currentModel = latestModelRef.current
     const currentProvider = latestProviderRef.current
 
-    const messageIndex = messages.findIndex(m => m.id === userMessage.id)
+    // Get fresh messages from conversation state (not stale closure)
+    const freshMessages = getCurrentConversation()?.messages || []
+
+    const messageIndex = freshMessages.findIndex(m => m.id === userMessage.id)
     if (messageIndex < 0) return
 
     const apiKey = apiKeys[currentProvider]
@@ -404,7 +413,7 @@ function ChatWindow({ conversationId, onOpenSettings }) {
 
     let messagesForApi
     try {
-      const updatedMessages = [...messages]
+      const updatedMessages = [...freshMessages]
       updatedMessages[messageIndex] = {
         ...updatedMessages[messageIndex],
         content: newContent,
@@ -413,7 +422,7 @@ function ChatWindow({ conversationId, onOpenSettings }) {
 
       const messagesUpToEdit = updatedMessages.slice(0, messageIndex + 1)
       await replaceMessages(messagesUpToEdit)
-      messagesForApi = formatMessagesForAPI(messagesUpToEdit)
+      messagesForApi = await formatMessagesForAPI(messagesUpToEdit)
 
       await addMessage({
         role: 'assistant',

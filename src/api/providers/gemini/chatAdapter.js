@@ -37,17 +37,83 @@ export async function sendStreamingMessage({
 
     // Convert messages to Gemini format
     // Gemini uses 'user' and 'model' roles, and 'parts' instead of 'content'
-    const contents = messages
-      .filter(m => m.role !== 'system')
-      .map(m => ({
-        role: m.role === 'assistant' ? 'model' : 'user',
-        parts: [{ text: m.content }]
-      }))
+    const contents = []
+    let systemMessageText = ''
 
-    // Handle system message by prepending it to first user message if present
-    const systemMessage = messages.find(m => m.role === 'system')
-    if (systemMessage && contents.length > 0 && contents[0].role === 'user') {
-      contents[0].parts[0].text = `${systemMessage.content}\n\n${contents[0].parts[0].text}`
+    // Extract system message first
+    const systemMsg = messages.find(m => m.role === 'system')
+    if (systemMsg) {
+      systemMessageText = systemMsg.content
+    }
+
+    // Process each message
+    for (const m of messages) {
+      if (m.role === 'system') continue
+
+      const role = m.role === 'assistant' ? 'model' : 'user'
+      const parts = []
+
+      // Handle content - can be string or array (from attachments)
+      if (Array.isArray(m.content)) {
+        // Content is array of parts (from formatMessageForAPI with attachments)
+        for (const part of m.content) {
+          if (part.type === 'text' && part.text) {
+            parts.push({ text: part.text })
+          } else if (part.type === 'image_url' && part.image_url?.url) {
+            // Convert image_url to Gemini inlineData format
+            const url = part.image_url.url
+            // Extract mime type from data URL or default to image/jpeg
+            const mimeType = url.match(/^data:([^;]+);base64,/)?.[1] || 'image/jpeg'
+            // Remove data URL prefix to get base64 data
+            const base64Data = url.replace(/^data:[^;]+;base64,/, '')
+            parts.push({
+              inlineData: {
+                mimeType,
+                data: base64Data
+              }
+            })
+          } else if (part.type === 'file' && part.file?.file_data) {
+            // Handle file type - extract from file_data (base64 data URL)
+            const fileData = part.file.file_data
+            const mimeType = fileData.match(/^data:([^;]+);base64,/)?.[1] || 'application/octet-stream'
+            const base64Data = fileData.replace(/^data:[^;]+;base64,/, '')
+            parts.push({
+              inlineData: {
+                mimeType,
+                data: base64Data
+              }
+            })
+          }
+        }
+      } else if (typeof m.content === 'string' && m.content.trim()) {
+        // Simple text content
+        parts.push({ text: m.content })
+      }
+
+      // Only add if we have parts
+      if (parts.length > 0) {
+        // Prepend system message to first user message if present
+        if (systemMessageText && role === 'user' && contents.length === 0) {
+          const firstPart = parts[0]
+          if (firstPart.text !== undefined) {
+            firstPart.text = `${systemMessageText}\n\n${firstPart.text}`
+          } else {
+            // If first part is inlineData, prepend text
+            parts.unshift({ text: systemMessageText })
+          }
+          systemMessageText = '' // Clear so we don't add again
+        }
+
+        contents.push({ role, parts })
+      }
+    }
+
+    // If system message wasn't prepended (no user messages), add it as a model instruction
+    if (systemMessageText) {
+      // Gemini doesn't have a system role, so we prepend to first content
+      if (contents.length > 0) {
+        contents[0].parts.unshift({ text: systemMessageText })
+      }
     }
 
     const generationConfig = {

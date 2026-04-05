@@ -61,8 +61,9 @@ export function createStreamingCallbacks({
 
     onError: (error) => {
       console.error('Streaming error:', error)
-      // Pass metadata to preserve model/provider even on error
-      updateLastMessage(`Error: ${error.message}`, false, metadata, conversationId)
+      // Don't persist error as assistant message - this corrupts the conversation
+      // The error will be shown to user via onError callback (toast notification)
+      // Just stop streaming and leave the assistant message empty for retry
       stopStreaming(conversationId)
 
       if (onError) {

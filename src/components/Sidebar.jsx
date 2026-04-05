@@ -134,9 +134,9 @@ function Sidebar({ isOpen, onSelectConversation, onOpenSettings, sidebarOpen, on
     >
       {/* Sidebar Toggle and New Conversation Container */}
       <div className={`sidebar-header flex flex-col items-center p-2 gap-2 ${isOpen ? '' : 'shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1)] rounded-b-lg'}`}>
-        <div className="w-full flex items-center justify-between">
+        <div className={`w-full flex items-center justify-between ${isOpen ? 'px-1' : ''}`}>
           {isOpen && provider && (
-            <span className="text-4xl font-semibold text-muted-foreground truncate flex-1">
+            <span className="text-4xl font-semibold text-muted-foreground truncate flex-1 mb-2">
               {PROVIDERS.find(p => p.id === provider)?.name || customProviders.find(p => p.id === provider)?.name || provider}
             </span>
           )}
@@ -170,9 +170,9 @@ function Sidebar({ isOpen, onSelectConversation, onOpenSettings, sidebarOpen, on
           </TooltipProvider>
         </div>
         {!isOpen && <Separator orientation="horizontal" className="w-full" />}
-        <div className="w-full">
+        <div className={`w-full ${isOpen ? 'mt-4 mb-1' : ''}`}>
           {isOpen ? (
-            <Button className="w-full h-11" variant="outline" onClick={startNewConversation}>
+            <Button className="w-full h-11 justify-start" variant="ghost" onClick={startNewConversation}>
               <PlusIcon className="mr-2 h-5 w-5" />
               <span className="text-base font-medium">New Conversation</span>
             </Button>
@@ -211,11 +211,10 @@ function Sidebar({ isOpen, onSelectConversation, onOpenSettings, sidebarOpen, on
                         ? 'bg-accent text-secondary-foreground'
                         : 'hover:bg-accent hover:text-accent-foreground'}
                     `}
-                  >
-                    <MessageSquareIcon className="h-5 w-5 flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
+                    >
+                      <div className="flex-1 min-w-0">
                       <p className="text-base font-medium leading-snug truncate">
-                        {conv.title.length > 16 ? conv.title.substring(0, 16) + '...' : conv.title}
+                        {conv.title.length > 19 ? conv.title.substring(0, 19) + '...' : conv.title}
                       </p>
                       <p className="text-sm text-muted-foreground mt-1">{formatTimestamp(conv.updatedAt)}</p>
                     </div>
@@ -263,7 +262,7 @@ function Sidebar({ isOpen, onSelectConversation, onOpenSettings, sidebarOpen, on
       </div>
 
       {/* Settings Button Container */}
-      <div className={`sidebar-footer ${isOpen ? 'border-t rounded-t-lg' : ''}`}>
+      <div className={`sidebar-footer ${isOpen ? 'border-t' : ''}`}>
         <div className={`${isOpen ? 'p-4' : 'p-2'}`}>
         {isOpen ? (
           <Button
