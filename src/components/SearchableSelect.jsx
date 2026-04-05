@@ -35,7 +35,7 @@ const OptionRow = memo(({ option, isSelected, showDescription, selectedValue, on
     <CommandItem
       value={option.id}
       onSelect={(currentValue) => {
-        onValueChange(currentValue === selectedValue ? '' : currentValue)
+        onValueChange(currentValue)
         onClose()
       }}
     >
