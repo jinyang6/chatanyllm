@@ -247,13 +247,13 @@ function ChatWindow({ conversationId, onOpenSettings }) {
       return
     }
 
-    const currentUserMessage = formatMessageForAPI(
+    const currentUserMessage = await formatMessageForAPI(
       { role: 'user', content: messageContent },
       attachments
     )
 
     const messagesForApi = [
-      ...formatMessagesForAPI(messages),
+      ...(await formatMessagesForAPI(messages)),
       currentUserMessage
     ]
 
