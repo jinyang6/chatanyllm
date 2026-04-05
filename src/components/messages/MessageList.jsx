@@ -156,6 +156,21 @@ function MessageList({ messages, onRetry, onEditUserMessage, onDeleteMessage, is
     messages.reduce((lastIdx, msg, idx) => msg.role === 'user' ? idx : lastIdx, -1)
   ), [messages])
 
+  // Stable handler refs keyed by message id - created once per messages array
+  const messageHandlers = useMemo(() => {
+    const handlers = {}
+    messages.forEach(msg => {
+      handlers[msg.id] = {
+        onDeleteClick: onDeleteMessage ? () => handleDeleteClick(msg.id) : null,
+        onToggleCollapse: () => handleToggleCollapse(msg.id),
+        onToggleThinking: () => handleToggleThinking(msg.id),
+        onStartEdit: onEditUserMessage ? () => handleStartEdit(msg) : null,
+        onSaveEdit: () => handleSaveEdit(msg)
+      }
+    })
+    return handlers
+  }, [messages, onDeleteMessage, handleDeleteClick, handleToggleCollapse, handleToggleThinking, onEditUserMessage, handleStartEdit, handleSaveEdit])
+
   return (
     <div className="flex-1 min-h-0 overflow-hidden">
       <ScrollArea ref={scrollAreaRef} className="h-full w-full">
@@ -187,16 +202,16 @@ function MessageList({ messages, onRetry, onEditUserMessage, onDeleteMessage, is
               editContent={isEditing ? editContent : ''}
               onEditContentChange={setEditContent}
               isDeleting={isDeleting}
-              onDeleteClick={onDeleteMessage ? () => handleDeleteClick(message.id) : null}
+              onDeleteClick={messageHandlers[message.id]?.onDeleteClick}
               onCancelDelete={handleCancelDelete}
               isCollapsed={isCollapsed}
-              onToggleCollapse={() => handleToggleCollapse(message.id)}
+              onToggleCollapse={messageHandlers[message.id]?.onToggleCollapse}
               isThinkingExpanded={isThinkingExpanded}
-              onToggleThinking={() => handleToggleThinking(message.id)}
+              onToggleThinking={messageHandlers[message.id]?.onToggleThinking}
               onRetry={onRetry}
-              onStartEdit={onEditUserMessage ? () => handleStartEdit(message) : null}
+              onStartEdit={messageHandlers[message.id]?.onStartEdit}
               onCancelEdit={handleCancelEdit}
-              onSaveEdit={() => handleSaveEdit(message)}
+              onSaveEdit={messageHandlers[message.id]?.onSaveEdit}
               onSetPreviewImage={handleSetPreviewImage}
               thinkingScrollRef={thinkingScrollRef}
             />

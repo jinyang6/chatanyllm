@@ -5,9 +5,14 @@ import { ConversationManager as conversationManager } from '@/core/chat/Conversa
 export function useConversationActions(setConversations, conversationsRef, currentConversationId, setCurrentConversationId) {
 
   const persistUpdate = async (updated, label) => {
-    setConversations(prev =>
-      conversationManager.sortByRecent(prev.map(c => c.id === updated.id ? updated : c))
-    )
+    setConversations(prev => {
+      if (prev[0]?.id === updated.id) {
+        const next = [...prev]
+        next[0] = updated
+        return next
+      }
+      return [updated, ...prev.filter(c => c.id !== updated.id)]
+    })
     try {
       await conversationStorage.save(updated)
     } catch (e) {
@@ -84,9 +89,14 @@ export function useConversationActions(setConversations, conversationsRef, curre
       provider: message.provider || conv.provider
     }
 
-    setConversations(prev =>
-      conversationManager.sortByRecent(prev.map(c => c.id === targetId ? updated : c))
-    )
+    setConversations(prev => {
+      if (prev[0]?.id === targetId) {
+        const next = [...prev]
+        next[0] = updated
+        return next
+      }
+      return [updated, ...prev.filter(c => c.id !== targetId)]
+    })
     try {
       await conversationStorage.save(updated)
     } catch (e) {
