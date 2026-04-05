@@ -136,7 +136,7 @@ function Sidebar({ isOpen, onSelectConversation, onOpenSettings, sidebarOpen, on
       <div className={`sidebar-header flex flex-col items-center p-2 gap-2 ${isOpen ? '' : 'shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1)] rounded-b-lg'}`}>
         <div className={`w-full flex items-center justify-between ${isOpen ? 'px-1' : ''}`}>
           {isOpen && provider && (
-            <span className="text-4xl font-semibold text-muted-foreground truncate flex-1 mb-2">
+            <span className="text-4xl font-semibold text-muted-foreground leading-none tracking-tight">
               {PROVIDERS.find(p => p.id === provider)?.name || customProviders.find(p => p.id === provider)?.name || provider}
             </span>
           )}
