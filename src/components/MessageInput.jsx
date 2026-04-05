@@ -168,7 +168,7 @@ function MessageInput({ onSendMessage, isStreaming = false, onStopGeneration, di
   return (
     <div className="absolute bottom-0 left-0 right-0">
       <form onSubmit={handleSubmit} className="relative flex flex-col mr-16">
-          <div className="w-[90%] max-w-3xl min-w-[500px] mx-auto rounded-t-2xl border border-[#c4c4c4] dark:border-[#555] shadow-[0_8px_30px_rgba(0,0,0,0.15)] transition-all p-3" style={{ backgroundColor: '#F9F9F9' }}>
+          <div className="w-[90%] max-w-3xl min-w-[500px] mx-auto rounded-t-2xl border border-[#c4c4c4] dark:border-[#555] shadow-[0_8px_30px_rgba(0,0,0,0.15)] transition-all p-3" style={{ backgroundColor: '#F2F2F2' }}>
             {/* Attachments Preview */}
             <AttachmentList
               attachments={attachments}
@@ -182,7 +182,7 @@ function MessageInput({ onSendMessage, isStreaming = false, onStopGeneration, di
                 ref={fileInputRef}
                 type="file"
                 multiple
-                accept="image/*,.pdf,.txt,.md,.json,.csv,.xml,.html,.css,.js,.ts,.jsx,.tsx,.py,.java,.cpp,.c,.h,.go,.rs,.rb,.php,.sql"
+                accept="*/*"
                 onChange={handleFileSelect}
                 className="hidden"
               />
