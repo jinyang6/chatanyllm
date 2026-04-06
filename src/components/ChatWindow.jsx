@@ -1,164 +1,24 @@
-import { useState, useEffect, useRef, memo, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import MessageList from './MessageList'
 import MessageInput from './MessageInput'
-import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
-import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Spinner } from '@/components/ui/spinner'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { SearchableSelect } from './SearchableSelect'
 import { PROVIDERS, getFallbackModels, getProviderById } from '@/config/providers'
 import { useProvider } from '@/contexts/ProviderContext'
 import { useConversation } from '@/contexts/ConversationContext'
 import { useModelFetcher, ERROR_TYPES } from '@/hooks/useModelFetcher'
 import { useError } from '@/contexts/ErrorContext'
 import { sendMessage as sendStreamingMessage } from '@/core/chat/ChatManager'
-import { RefreshCw as RefreshCwIcon, AlertTriangle as AlertTriangleIcon, WifiOff as WifiOffIcon, Key as KeyIcon, PanelLeftClose as ChevronsLeftIcon, PanelLeftOpen as ChevronsRightIcon } from 'lucide-react'
 import { formatMessageForAPI, formatMessagesForAPI } from '@/utils/messageFormatters'
 import { isThinkingModel, isImageGenerationModel, getModalitiesForModel } from '@/core/model/ModelUtils'
 import { handleStreamingError } from '@/utils/errorHandlers'
 import { createStreamingCallbacks } from '@/utils/streamingHelpers'
 import { UpdateButton } from './UpdateButton'
 
-// ─── ChatHeader ───────────────────────────────────────────────────────────────
-
-const ChatHeader = memo(({
-  provider,
-  model,
-  allProviders,
-  currentModels,
-  fetchStatus,
-  usingFallback,
-  sidebarOpen,
-  onToggleSidebar,
-  onProviderChange,
-  onModelChange,
-  onRefreshModels,
-}) => {
-  return (
-    <div className="border-b px-6 py-4 bg-muted/10">
-      <div className="flex items-center gap-6">
-        {/* Sidebar Toggle Button */}
-        <TooltipProvider delayDuration={300}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onToggleSidebar}
-                className="h-16 w-16 flex-shrink-0"
-              >
-                {sidebarOpen ? (
-                  <ChevronsLeftIcon size={28} />
-                ) : (
-                  <ChevronsRightIcon size={28} />
-                )}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right" sideOffset={8} className="font-medium">
-              <p className="text-sm">
-                {sidebarOpen ? 'Collapse' : 'Expand'} sidebar
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                <kbd className="inline-flex h-4 select-none items-center gap-1 rounded border bg-muted px-1 font-mono text-[10px] font-medium">
-                  {navigator.platform.includes('Mac') ? '⌘B' : 'Ctrl+B'}
-                </kbd>
-              </p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-
-        {/* Provider/Model Selection Container */}
-        <div className="border rounded-xl p-3 flex items-center gap-3 w-fit shadow-sm bg-background">
-          <Badge variant="secondary" className="text-sm px-3 py-1 bg-muted text-foreground hover:bg-muted pointer-events-none">Provider</Badge>
-          <SearchableSelect
-            value={provider}
-            onValueChange={onProviderChange}
-            options={allProviders}
-            placeholder="Select provider..."
-            searchPlaceholder="Search providers..."
-            showDescription={true}
-            className="h-10 text-base"
-          />
-
-          <Separator orientation="vertical" className="h-6" />
-
-          <Badge variant="secondary" className="text-sm px-3 py-1 bg-muted text-foreground hover:bg-muted pointer-events-none">Model</Badge>
-          <SearchableSelect
-            value={model}
-            onValueChange={onModelChange}
-            options={currentModels}
-            placeholder={
-              fetchStatus.loading
-                ? 'Loading models...'
-                : fetchStatus.errorType === ERROR_TYPES.NO_API_KEY
-                ? 'Configure API key first'
-                : fetchStatus.errorType === ERROR_TYPES.INVALID_KEY
-                ? 'Invalid API key'
-                : fetchStatus.error
-                ? 'Error loading models'
-                : currentModels.length === 0
-                ? 'No models available'
-                : 'Select model...'
-            }
-            searchPlaceholder="Search models..."
-            showDescription={true}
-            className="h-10 min-w-[240px] text-base"
-            loading={fetchStatus.loading}
-            error={fetchStatus.error}
-          />
-
-          {/* Context-aware warning badges */}
-          {fetchStatus.errorType === ERROR_TYPES.NO_API_KEY && (
-            <Badge variant="outline" className="text-red-600 border-red-600 h-10 px-3 text-sm">
-              <KeyIcon className="h-4 w-4 mr-2" />
-              API Key Required
-            </Badge>
-          )}
-          {fetchStatus.errorType === ERROR_TYPES.INVALID_KEY && (
-            <Badge variant="outline" className="text-red-600 border-red-600 h-10 px-3 text-sm">
-              <AlertTriangleIcon className="h-4 w-4 mr-2" />
-              Invalid API Key
-            </Badge>
-          )}
-          {fetchStatus.errorType === ERROR_TYPES.NETWORK_ERROR && usingFallback && (
-            <Badge variant="outline" className="text-blue-600 border-blue-600 h-10 px-3 text-sm">
-              <WifiOffIcon className="h-4 w-4 mr-2" />
-              Network Error - Using Fallback
-            </Badge>
-          )}
-          {fetchStatus.errorType === ERROR_TYPES.OTHER_ERROR && usingFallback && (
-            <Badge variant="outline" className="text-yellow-600 border-yellow-600 h-10 px-3 text-sm">
-              <AlertTriangleIcon className="h-4 w-4 mr-2" />
-              Using Fallback Models
-            </Badge>
-          )}
-
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-10 w-10"
-            onClick={onRefreshModels}
-            disabled={fetchStatus.loading}
-            title="Refresh models"
-          >
-            <RefreshCwIcon className={`h-5 w-5 ${fetchStatus.loading ? 'animate-spin' : ''}`} />
-          </Button>
-        </div>
-
-        {/* Update Button - Outside the bordered container */}
-        <div className="ml-auto flex items-center">
-          <UpdateButton />
-        </div>
-      </div>
-    </div>
-  )
-})
-
 // ─── ChatWindow ───────────────────────────────────────────────────────────────
 
-function ChatWindow({ conversationId, onOpenSettings, sidebarOpen, onToggleSidebar }) {
+function ChatWindow({ conversationId, onOpenSettings }) {
   const {
     provider,
     setProvider,
@@ -265,20 +125,18 @@ function ChatWindow({ conversationId, onOpenSettings, sidebarOpen, onToggleSideb
     autoFetchModels()
   }, [provider, hasApiKey, isLoading])
 
-  const getModalitiesForCurrentModel = (modelId, providerId = null) => {
+  const getModelsForCurrentProvider = (providerId = null) => {
     const targetProvider = providerId || provider
     const fetched = getModelsForProvider(targetProvider)
-    const fallback = getFallbackModels(targetProvider)
-    const models = fetched.length > 0 ? fetched : fallback
-    return getModalitiesForModel(modelId, models)
+    return fetched.length > 0 ? fetched : getFallbackModels(targetProvider)
+  }
+
+  const getModalitiesForCurrentModel = (modelId, providerId = null) => {
+    return getModalitiesForModel(modelId, getModelsForCurrentProvider(providerId))
   }
 
   const isModelThinking = (modelId, providerId = null) => {
-    const targetProvider = providerId || provider
-    const fetched = getModelsForProvider(targetProvider)
-    const fallback = getFallbackModels(targetProvider)
-    const models = fetched.length > 0 ? fetched : fallback
-    return isThinkingModel(modelId, models)
+    return isThinkingModel(modelId, getModelsForCurrentProvider(providerId))
   }
 
   // Restore conversation's last used model when switching conversations
@@ -389,13 +247,16 @@ function ChatWindow({ conversationId, onOpenSettings, sidebarOpen, onToggleSideb
       return
     }
 
-    const currentUserMessage = formatMessageForAPI(
+    const currentUserMessage = await formatMessageForAPI(
       { role: 'user', content: messageContent },
       attachments
     )
 
+    // Get fresh messages from conversation state (not stale closure)
+    const freshMessages = getCurrentConversation()?.messages || []
+
     const messagesForApi = [
-      ...formatMessagesForAPI(messages),
+      ...(await formatMessagesForAPI(freshMessages)),
       currentUserMessage
     ]
 
@@ -452,10 +313,13 @@ function ChatWindow({ conversationId, onOpenSettings, sidebarOpen, onToggleSideb
   const handleRetry = async (assistantMessage) => {
     if (isConversationStreaming(currentConversationId)) return
 
-    const messageIndex = messages.findIndex(m => m.id === assistantMessage.id)
+    // Get fresh messages from conversation state (not stale closure)
+    const freshMessages = getCurrentConversation()?.messages || []
+
+    const messageIndex = freshMessages.findIndex(m => m.id === assistantMessage.id)
     if (messageIndex <= 0) return
 
-    const userMessage = messages[messageIndex - 1]
+    const userMessage = freshMessages[messageIndex - 1]
     if (userMessage.role !== 'user') return
 
     const apiKey = apiKeys[provider]
@@ -469,7 +333,7 @@ function ChatWindow({ conversationId, onOpenSettings, sidebarOpen, onToggleSideb
     const currentModel = latestModelRef.current
     const currentProvider = latestProviderRef.current
 
-    const messagesForApi = formatMessagesForAPI(messages.slice(0, messageIndex))
+    const messagesForApi = await formatMessagesForAPI(freshMessages.slice(0, messageIndex))
 
     const clearMetadata = {
       timestamp: new Date().toISOString(),
@@ -532,7 +396,10 @@ function ChatWindow({ conversationId, onOpenSettings, sidebarOpen, onToggleSideb
     const currentModel = latestModelRef.current
     const currentProvider = latestProviderRef.current
 
-    const messageIndex = messages.findIndex(m => m.id === userMessage.id)
+    // Get fresh messages from conversation state (not stale closure)
+    const freshMessages = getCurrentConversation()?.messages || []
+
+    const messageIndex = freshMessages.findIndex(m => m.id === userMessage.id)
     if (messageIndex < 0) return
 
     const apiKey = apiKeys[currentProvider]
@@ -546,7 +413,7 @@ function ChatWindow({ conversationId, onOpenSettings, sidebarOpen, onToggleSideb
 
     let messagesForApi
     try {
-      const updatedMessages = [...messages]
+      const updatedMessages = [...freshMessages]
       updatedMessages[messageIndex] = {
         ...updatedMessages[messageIndex],
         content: newContent,
@@ -555,7 +422,7 @@ function ChatWindow({ conversationId, onOpenSettings, sidebarOpen, onToggleSideb
 
       const messagesUpToEdit = updatedMessages.slice(0, messageIndex + 1)
       await replaceMessages(messagesUpToEdit)
-      messagesForApi = formatMessagesForAPI(messagesUpToEdit)
+      messagesForApi = await formatMessagesForAPI(messagesUpToEdit)
 
       await addMessage({
         role: 'assistant',
@@ -620,17 +487,7 @@ function ChatWindow({ conversationId, onOpenSettings, sidebarOpen, onToggleSideb
   // Loading skeleton
   if (isLoading) {
     return (
-      <div className="flex-1 flex flex-col h-full min-w-0">
-        <div className="border-b px-4 py-3">
-          <div className="border rounded-lg p-2 flex items-center gap-2 w-fit">
-            <Skeleton className="h-5 w-16" />
-            <Skeleton className="h-8 w-32" />
-            <Skeleton className="h-5 w-1" />
-            <Skeleton className="h-5 w-12" />
-            <Skeleton className="h-8 w-48" />
-            <Skeleton className="h-8 w-8 rounded-md" />
-          </div>
-        </div>
+      <div className="flex-1 flex flex-col min-h-0 min-w-0">
         <div className="flex-1 flex items-center justify-center">
           <div className="flex flex-col items-center gap-3">
             <Spinner className="size-8" />
@@ -645,20 +502,7 @@ function ChatWindow({ conversationId, onOpenSettings, sidebarOpen, onToggleSideb
   }
 
   return (
-    <div className="flex-1 flex flex-col h-full min-w-0">
-      <ChatHeader
-        provider={provider}
-        model={model}
-        allProviders={allProviders}
-        currentModels={currentModels}
-        fetchStatus={fetchStatus}
-        usingFallback={usingFallback}
-        sidebarOpen={sidebarOpen}
-        onToggleSidebar={onToggleSidebar}
-        onProviderChange={handleProviderChange}
-        onModelChange={handleModelChange}
-        onRefreshModels={handleRefreshModels}
-      />
+    <div className="relative flex-1 flex flex-col min-h-0 min-w-0">
       <MessageList
         messages={messages}
         onRetry={handleRetry}

@@ -261,7 +261,7 @@ export function AddProviderDialog({ open, onClose, editProvider = null }) {
           <Alert>
             <InfoIcon className="h-5 w-5" />
             <AlertDescription className="text-xs">
-              This assumes OpenAI-compatible format with models at <code className="text-xs bg-muted px-1 py-0.5 rounded">/v1/models</code> and authentication via <code className="text-xs bg-muted px-1 py-0.5 rounded">Authorization: Bearer</code> header.
+              Uses OpenAI-compatible api. Your base URL (e.g., <code className="text-xs bg-muted px-1 py-0.5 rounded">http://127.0.0.1:18789/v1</code>) is automatically appended with <code className="text-xs bg-muted px-1 py-0.5 rounded">/models</code>. Authentication via <code className="text-xs bg-muted px-1 py-0.5 rounded">Authorization: Bearer</code> header.
             </AlertDescription>
           </Alert>
         </div>

@@ -8,6 +8,7 @@ import TitleBar from './components/TitleBar'
 import Sidebar from './components/Sidebar'
 import ChatWindow from './components/ChatWindow'
 import SettingsModal from './components/SettingsModal'
+import ProviderModelBar from './components/ProviderModelBar'
 import { isElectron, signalAppReady } from '@/platform/ElectronBridge'
 
 // Inner component that signals app ready when both contexts are loaded
@@ -80,23 +81,28 @@ function App() {
               {/* Custom Title Bar (Electron only) */}
               <TitleBar />
 
-              {/* Main Content Area */}
-              <div className="flex flex-1 overflow-hidden">
+              {/* Main Content Area - Sidebar + Provider Bar share same top border (reverse L) */}
+              <div className="relative flex flex-1 overflow-hidden">
                 {/* Collapsible Sidebar */}
                 <Sidebar
                   isOpen={sidebarOpen}
-                  currentConversation={currentConversation}
                   onSelectConversation={setCurrentConversation}
-                  onOpenSettings={() => setShowSettings(true)}
-                />
-
-                {/* Main Chat Area */}
-                <ChatWindow
-                  conversationId={currentConversation}
                   onOpenSettings={() => setShowSettings(true)}
                   sidebarOpen={sidebarOpen}
                   onToggleSidebar={() => setSidebarOpen(prev => !prev)}
                 />
+
+                {/* Right side: Provider Bar at top, ChatWindow below */}
+                <div className="flex flex-col flex-1 min-w-0 h-full overflow-hidden">
+                  {/* Provider/Model Selector Bar */}
+                  <ProviderModelBar onOpenSettings={() => setShowSettings(true)} />
+
+                  {/* Main Chat Area */}
+                  <ChatWindow
+                    conversationId={currentConversation}
+                    onOpenSettings={() => setShowSettings(true)}
+                  />
+                </div>
 
                 {/* Settings Modal */}
                 {showSettings && (

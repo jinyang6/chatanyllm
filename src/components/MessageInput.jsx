@@ -166,130 +166,136 @@ function MessageInput({ onSendMessage, isStreaming = false, onStopGeneration, di
   const canSend = (message.trim().length > 0 || attachments.length > 0) && !isDisabled
 
   return (
-    <div className="border-t bg-background">
-      <div className="max-w-4xl mx-auto px-6 py-4">
-        <form onSubmit={handleSubmit} className="relative">
-          {/* Attachments Preview */}
-          <AttachmentList
-            attachments={attachments}
-            onRemove={handleRemoveAttachment}
-          />
-
-          <div className="relative flex items-center gap-2 rounded-xl border-2 bg-background shadow-md transition-all focus-within:border-ring focus-within:shadow-lg p-3">
-            {/* Hidden File Input */}
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              accept="image/*,.pdf,.txt,.md,.json,.csv,.xml,.html,.css,.js,.ts,.jsx,.tsx,.py,.java,.cpp,.c,.h,.go,.rs,.rb,.php,.sql"
-              onChange={handleFileSelect}
-              className="hidden"
+    <div className="absolute bottom-0 left-0 right-0">
+      <form onSubmit={handleSubmit} className="relative flex flex-col mr-16">
+          <div className="w-[90%] max-w-3xl min-w-[500px] mx-auto rounded-t-2xl border border-[#c4c4c4] dark:border-[#555] shadow-[0_4px_16px_rgba(0,0,0,0.08)] transition-all p-3" style={{ backgroundColor: '#F2F2F2' }}>
+            {/* Attachments Preview */}
+            <AttachmentList
+              attachments={attachments}
+              onRemove={handleRemoveAttachment}
             />
 
-            {/* Attach Button */}
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    type="button"
-                    onClick={handleAttachClick}
-                    size="icon"
-                    variant="ghost"
-                    disabled={isDisabled}
-                    className="h-9 w-9 rounded-lg hover:bg-muted flex-shrink-0"
-                  >
-                    <PaperclipIcon className="h-5 w-5" />
-                    <span className="sr-only">Attach file</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="text-sm">Attach files (images, documents)</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            {/* Row: Textarea + Send */}
+            <div className="relative flex items-center gap-2">
+              {/* Hidden File Input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept="*/*"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
 
-            {/* Textarea */}
-            <Textarea
-              ref={textareaRef}
-              value={message}
-              onChange={handleChange}
-              onKeyDown={handleKeyDown}
-              onPaste={handlePaste}
-              placeholder={
-                isStreaming
-                  ? 'Waiting for response...'
-                  : 'Send a message... (Shift+Enter for new line, Ctrl+V to paste images)'
-              }
-              disabled={isDisabled}
-              className="min-h-[44px] max-h-[400px] resize-none border-0 bg-transparent px-4 py-3.5 text-base md:text-base font-normal text-black dark:text-white leading-[1.5] antialiased shadow-none focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-50 flex-1"
-              rows={1}
-            />
+              {/* Textarea */}
+              <Textarea
+                ref={textareaRef}
+                value={message}
+                onChange={handleChange}
+                onKeyDown={handleKeyDown}
+                onPaste={handlePaste}
+                placeholder={
+                  isStreaming
+                    ? 'Waiting for response...'
+                    : 'Send a message, Ctrl+V to paste images'
+                }
+                disabled={isDisabled}
+                maxLength={16000}
+                className="min-h-[44px] max-h-[400px] resize-none border-0 bg-transparent px-4 py-3.5 text-base md:text-base font-normal text-black dark:text-white leading-[1.5] antialiased shadow-none focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-50 flex-1"
+                rows={1}
+              />
 
-            {/* Send/Stop Button */}
-            {isStreaming ? (
+              {/* Send/Stop Button */}
+              {isStreaming ? (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="button"
+                        onClick={handleStop}
+                        size="icon"
+                        variant="destructive"
+                        className="h-11 w-11 rounded-xl hover:bg-red-700 p-0 shadow-lg flex-shrink-0"
+                      >
+                        <StopIcon className="h-6 w-6" />
+                        <span className="sr-only">Stop generation</span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-sm font-medium">Stop generation</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              ) : (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="submit"
+                        size="icon"
+                        disabled={!canSend}
+                        className="h-11 w-11 rounded-lg transition-all disabled:opacity-40 shadow-sm flex-shrink-0"
+                      >
+                        <ArrowUpIcon className="h-5 w-5" />
+                        <span className="sr-only">Send message</span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-sm">Send message (Enter)</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+              </div>
+
+            {/* Row: Attach Button below textarea */}
+            <div className="flex items-start">
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
                       type="button"
-                      onClick={handleStop}
+                      onClick={handleAttachClick}
                       size="icon"
-                      variant="destructive"
-                      className="h-11 w-11 rounded-xl hover:bg-red-700 p-0 shadow-lg flex-shrink-0"
+                      variant="ghost"
+                      disabled={isDisabled}
+                      className="h-9 w-9 rounded-lg hover:bg-muted flex-shrink-0"
                     >
-                      <StopIcon className="h-6 w-6" />
-                      <span className="sr-only">Stop generation</span>
+                      <PaperclipIcon className="h-5 w-5" />
+                      <span className="sr-only">Attach file</span>
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p className="text-sm font-medium">Stop generation</p>
+                    <p className="text-sm">Attach files (images, documents)</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-            ) : (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      type="submit"
-                      size="icon"
-                      disabled={!canSend}
-                      className="h-11 w-11 rounded-lg transition-all disabled:opacity-40 shadow-sm flex-shrink-0"
-                    >
-                      <ArrowUpIcon className="h-5 w-5" />
-                      <span className="sr-only">Send message</span>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-sm">Send message (Enter)</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
-          </div>
+            </div>
 
-          {/* Keyboard hints */}
-          <div className="mt-2 flex items-center justify-center gap-2 text-xs text-muted-foreground">
-            <span>
-              <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono font-medium opacity-100">
-                Enter
-              </kbd>{' '}
-              to send
-            </span>
-            <span className="text-muted-foreground/50">•</span>
-            <span>
-              <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono font-medium opacity-100">
-                Shift
-              </kbd>
-              {' + '}
-              <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono font-medium opacity-100">
-                Enter
-              </kbd>{' '}
-              for new line
-            </span>
+            {/* Keyboard hints row */}
+            <div className="flex items-center justify-center">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span>
+                  <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono font-medium opacity-100">
+                    Enter
+                  </kbd>{' '}
+                  to send
+                </span>
+                <span className="text-muted-foreground/50">•</span>
+                <span>
+                  <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono font-medium opacity-100">
+                    Shift
+                  </kbd>
+                  {' + '}
+                  <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono font-medium opacity-100">
+                    Enter
+                  </kbd>{' '}
+                  for new line
+                </span>
+              </div>
+            </div>
           </div>
         </form>
-      </div>
     </div>
   )
 }
