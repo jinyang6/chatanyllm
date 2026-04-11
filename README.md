@@ -2,7 +2,7 @@
 
 A desktop chat application that connects to any AI provider and agentic system via OpenAI-compatible APIs.
 
-**[Visit Website](https://jinyang6.github.io/chatanyllm/)**
+**[Visit Website](https://jinyang6.github.io/chatanyllm/) | [Download](https://github.com/jinyang6/chatanyllm/releases/latest)**
 
 <p align="center">
   <img src="assets/screenshots/hero.png" alt="ChatAnyLLM" style="border-radius: 8px;" />
