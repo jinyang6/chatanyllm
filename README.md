@@ -1,6 +1,6 @@
 # ChatAnyLLM
 
-A desktop chat application that connects to any AI provider and agentic system via OpenAI-compatible APIs.
+A desktop chat application that connects to any model provider or agentic system via OpenAI-compatible APIs.
 
 **[Visit Website](https://jinyang6.github.io/chatanyllm/) | [Download](https://github.com/jinyang6/chatanyllm/releases/latest)**
 
@@ -10,11 +10,11 @@ A desktop chat application that connects to any AI provider and agentic system v
 
 ## Features
 
-- **Multiple AI Providers** - OpenRouter (recommended), OpenAI, Anthropic Claude, Google Gemini, and custom endpoints
+- **ALL Model Providers** - Switch model, provider, or agent mid-conversation
 - **Local & Secure** - All conversations stored locally, API keys encrypted with Windows DPAPI
 - **Rich Formatting** - Markdown, code syntax highlighting, LaTeX math equations
-- **Image Support** - Paste and preview images in conversations
-- **Custom Providers** - Add any AI provider or agentic system (e.g., OpenClaw) via OpenAI-compatible APIs
+- **Image Support** - Paste and generate images in conversations
+- **Custom Providers** - Add any model provider or agentic system (e.g., OpenClaw) via OpenAI-compatible APIs
 
 ## Installation
 
