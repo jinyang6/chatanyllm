@@ -10,8 +10,8 @@ A desktop chat application that connects to any model provider or agentic system
 
 ## Features
 
-- **ALL Model Providers** - Switch local model, cloud provider, or custom agent mid-conversation.
-- **Custom Providers** - Add any model provider or agentic system (e.g., OpenClaw) via OpenAI-compatible APIs
+- **Custom Endpoints** - Add any model provider or agentic system (e.g., OpenClaw) via OpenAI-compatible APIs
+- **ALL Model Providers** - Switch local model, cloud provider, or custom agent mid-conversation
 - **Local & Secure** - All conversations stored locally, API keys encrypted with Windows DPAPI
 - **Rich Formatting** - Markdown, code syntax highlighting, LaTeX math equations
 - **Image Support** - Paste and generate images in conversations
