@@ -13,6 +13,7 @@ export const PROVIDERS = [
     authHeaderKey: 'Authorization',
     authHeaderValue: 'Bearer {key}',
     extraHeaders: {
+      'HTTP-Referer': 'https://github.com/jinyang6/chatanyllm',
       'X-Title': 'ChatAnyLLM'
     },
     supportsDynamicFetch: true,

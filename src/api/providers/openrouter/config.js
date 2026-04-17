@@ -9,8 +9,7 @@ export const config = {
     const provider = getProviderById('openrouter')
     return {
       'Authorization': `Bearer ${apiKey}`,
-      ...provider.extraHeaders,
-      'HTTP-Referer': typeof window !== 'undefined' ? window.location.origin : ''
+      ...provider.extraHeaders
     }
   },
   extractModelCount: (data) => {
