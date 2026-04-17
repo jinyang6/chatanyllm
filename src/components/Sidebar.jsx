@@ -156,7 +156,7 @@ function Sidebar({ isOpen, onSelectConversation, onOpenSettings, sidebarOpen, on
                   )}
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="right" sideOffset={8} className="font-medium">
+              <TooltipContent side="right" sideOffset={5} className="font-medium">
                 <p className="text-sm">
                   {sidebarOpen ? 'Collapse' : 'Expand'} sidebar
                 </p>
@@ -185,7 +185,7 @@ function Sidebar({ isOpen, onSelectConversation, onOpenSettings, sidebarOpen, on
                     <span className="sr-only">New Conversation</span>
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent side="right">
+                <TooltipContent side="right" sideOffset={5}>
                   <p className="font-medium text-sm">New Conversation</p>
                 </TooltipContent>
               </Tooltip>
@@ -287,8 +287,8 @@ function Sidebar({ isOpen, onSelectConversation, onOpenSettings, sidebarOpen, on
                   <span className="sr-only">Settings</span>
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="right">
-                <p className="font-medium">Settings</p>
+              <TooltipContent side="right" sideOffset={5} className="font-medium">
+                <p className="font-medium text-sm">Settings</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>

@@ -29,8 +29,8 @@ export function CopyButton({ text, className, variant = 'ghost', size = 'sm' }) 
             <span className="sr-only">{copied ? 'Copied!' : 'Copy to clipboard'}</span>
           </Button>
         </TooltipTrigger>
-        <TooltipContent>
-          <p className="text-sm">{copied ? 'Copied!' : 'Copy to clipboard'}</p>
+        <TooltipContent sideOffset={5}>
+          <p className="text-sm font-medium">{copied ? 'Copied!' : 'Copy to clipboard'}</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
