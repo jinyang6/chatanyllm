@@ -1,5 +1,4 @@
 import { memo, useCallback } from 'react'
-import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Button } from '@/components/ui/button'
 import { SearchableSelect } from '@/components/ui/select'
@@ -136,28 +135,28 @@ const ProviderModelBar = memo(({ onOpenSettings }) => {
         />
 
         {fetchStatus.errorType === ERROR_TYPES.NO_API_KEY && (
-          <Badge variant="outline" className="text-red-600 border-red-600 h-10 px-3 text-sm">
-            <KeyIcon className="h-4 w-4 mr-2" />
+          <div className="bg-red-600 text-white rounded-full h-8 px-3 flex items-center gap-1.5 text-xs font-medium">
+            <KeyIcon className="h-3.5 w-3.5" />
             API Key Required
-          </Badge>
+          </div>
         )}
         {fetchStatus.errorType === ERROR_TYPES.INVALID_KEY && (
-          <Badge variant="outline" className="text-red-600 border-red-600 h-10 px-3 text-sm">
-            <AlertTriangleIcon className="h-4 w-4 mr-2" />
+          <div className="bg-red-600 text-white rounded-full h-8 px-3 flex items-center gap-1.5 text-xs font-medium">
+            <AlertTriangleIcon className="h-3.5 w-3.5" />
             Invalid API Key
-          </Badge>
+          </div>
         )}
         {fetchStatus.errorType === ERROR_TYPES.NETWORK_ERROR && usingFallback && (
-          <Badge variant="outline" className="text-blue-600 border-blue-600 h-10 px-3 text-sm">
-            <WifiOffIcon className="h-4 w-4 mr-2" />
-            Network Error - Using Fallback
-          </Badge>
+          <div className="bg-blue-600 text-white rounded-full h-8 px-3 flex items-center gap-1.5 text-xs font-medium">
+            <WifiOffIcon className="h-3.5 w-3.5" />
+            Network Error
+          </div>
         )}
         {fetchStatus.errorType === ERROR_TYPES.OTHER_ERROR && usingFallback && (
-          <Badge variant="outline" className="text-yellow-600 border-yellow-600 h-10 px-3 text-sm">
-            <AlertTriangleIcon className="h-4 w-4 mr-2" />
-            Using Fallback Models
-          </Badge>
+          <div className="bg-amber-600 text-white rounded-full h-8 px-3 flex items-center gap-1.5 text-xs font-medium">
+            <AlertTriangleIcon className="h-3.5 w-3.5" />
+            Using Fallback
+          </div>
         )}
 
         <Button
