@@ -112,7 +112,7 @@ function App() {
             </div>
 
             {/* Toast Notifications */}
-            <Toaster richColors position="bottom-right" />
+            <Toaster richColors position="bottom-right" swipeDirections={['right']} />
           </ConversationProvider>
         </ProviderProvider>
       </UpdateProvider>

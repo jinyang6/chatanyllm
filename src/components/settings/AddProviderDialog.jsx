@@ -197,7 +197,7 @@ export function AddProviderDialog({ open, onClose, editProvider = null }) {
           <DialogDescription>
             {editProvider
               ? 'Update your OpenAI-compatible API provider configuration.'
-              : 'Add an OpenAI-compatible API provider. Works with LM Studio, Ollama, Together AI, and other compatible services.'
+              : 'Add an OpenAI-compatible API provider. Works with LM Studio, Ollama and other compatible services.'
             }
           </DialogDescription>
         </DialogHeader>
@@ -210,7 +210,7 @@ export function AddProviderDialog({ open, onClose, editProvider = null }) {
             </Label>
             <Input
               id="provider-name"
-              placeholder="e.g., LM Studio, Ollama, Together AI"
+              placeholder="e.g., LM Studio, Ollama"
               value={formData.name}
               onChange={(e) => handleChange('name', e.target.value)}
               className={errors.name ? 'border-destructive' : ''}

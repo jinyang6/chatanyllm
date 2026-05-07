@@ -3,7 +3,7 @@ import { ArrowUp as ArrowUpIcon, CircleStop as StopIcon, Paperclip as PaperclipI
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { AttachmentList } from '@/components/ui/AttachmentList'
+import { AttachmentList } from '@/components/ui/attachment-list'
 import { convertImageToPNG, calculateBase64Size } from '@/utils/imageConverter'
 import { toast } from 'sonner'
 

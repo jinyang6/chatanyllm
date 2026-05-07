@@ -8,6 +8,15 @@ function registerShellHandlers(ipcMain, getMainWindow, shell, dialog) {
     }
   })
 
+  ipcMain.handle('shell:showItemInFolder', async (event, filePath) => {
+    try {
+      await shell.showItemInFolder(filePath)
+      return { success: true }
+    } catch (error) {
+      return { success: false, error: error.message }
+    }
+  })
+
   ipcMain.handle('dialog:openFile', async (event, options) => {
     try {
       const result = await dialog.showOpenDialog(getMainWindow(), options)

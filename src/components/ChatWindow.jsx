@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import MessageList from './MessageList'
+import MessageList from '@/components/messages/MessageList'
 import MessageInput from './MessageInput'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Spinner } from '@/components/ui/spinner'

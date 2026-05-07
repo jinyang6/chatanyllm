@@ -1,6 +1,6 @@
-import { isElectron } from '@/platform/ElectronBridge'
+import { isElectron, revealInFolder } from '@/platform/ElectronBridge'
 import { fileSystem } from '@/platform/FileSystem'
-import { toast } from 'sonner'
+import { showPillToast } from '@/components/ui/toast-pill'
 
 /**
  * Download an image to user's chosen location
@@ -24,10 +24,14 @@ export async function downloadImage(imageUrl, suggestedName = 'image.png') {
       }
 
       if (result.success) {
-        toast.success(`Image saved to ${result.path}`)
+        showPillToast('Saved', {
+          actionLabel: 'Open',
+          onAction: () => revealInFolder(result.path),
+          duration: 5000,
+        })
         return { success: true, path: result.path }
       } else {
-        toast.error(`Failed to save image: ${result.error || 'Unknown error'}`)
+        showPillToast(`Failed to save image: ${result.error || 'Unknown error'}`)
         return { success: false, error: result.error }
       }
     } else {
@@ -40,12 +44,12 @@ export async function downloadImage(imageUrl, suggestedName = 'image.png') {
       link.click()
       document.body.removeChild(link)
 
-      toast.success(`Image saved to ${filename}`)
+      showPillToast('Saved', { duration: 4000 })
       return { success: true }
     }
   } catch (error) {
     console.error('Download error:', error)
-    toast.error(`Failed to download image: ${error.message}`)
+    showPillToast(`Failed to download image: ${error.message}`)
     return { success: false, error: error.message }
   }
 }

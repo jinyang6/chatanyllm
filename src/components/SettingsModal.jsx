@@ -10,7 +10,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { Key as KeyIcon, Settings as SettingsIcon, Plus as PlusIcon } from 'lucide-react'
-import { AddProviderDialog } from './AddProviderDialog'
+import { AddProviderDialog } from './settings/AddProviderDialog'
 import { PreferencesTab } from './settings/PreferencesTab'
 import { ApiKeysTab } from './settings/ApiKeysTab'
 import { CustomProvidersTab } from './settings/CustomProvidersTab'

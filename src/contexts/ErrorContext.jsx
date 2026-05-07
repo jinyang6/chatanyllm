@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback } from 'react'
-import { AlertDialog } from '@/components/AlertDialog'
+import { AlertDialog } from '@/components/ui/alert-dialog'
 
 const ErrorContext = createContext(null)
 

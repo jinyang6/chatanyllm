@@ -2,7 +2,7 @@ import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Info as InfoIcon } from 'lucide-react'
-import { SearchableSelect } from '../SearchableSelect'
+import { SearchableSelect } from '@/components/ui/select'
 import { ERROR_TYPES } from '@/hooks/useModelFetcher'
 
 export function PreferencesTab({

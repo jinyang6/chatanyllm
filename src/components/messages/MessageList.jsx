@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, memo, useMemo, useCallback } from 'react'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { ImagePreviewModal } from '@/components/ImagePreviewModal'
+import { ImagePreviewModal } from './ImagePreviewModal'
 import { downloadImage } from '@/utils/imageDownload'
 import { MessageItem } from './MessageItem'
 

@@ -147,3 +147,20 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+/* Auto-dismiss toasts slide out to the right */
+[data-sonner-toast][data-removed='true'][data-swipe-out='false'] {
+  --y: translateX(100%) !important;
+  opacity: 0 !important;
+}
+
+/* Toasts slide in from the right */
+[data-sonner-toast] {
+  --y: translateX(100%) !important;
+  transition: transform 500ms ease, opacity 500ms ease !important;
+}
+
+[data-sonner-toast][data-mounted='true'] {
+  --y: translateX(0) !important;
+  opacity: 1 !important;
+}

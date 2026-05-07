@@ -41,6 +41,13 @@ export const openExternal = async (url) => {
   return window.electronAPI.shell.openExternal(url)
 }
 
+export const revealInFolder = async (filePath) => {
+  if (!isElectron()) {
+    return { success: false, error: 'Not available in browser mode' }
+  }
+  return window.electronAPI.shell.showItemInFolder(filePath)
+}
+
 // Check if encryption is available
 export const isEncryptionAvailable = async () => {
   if (!isElectron()) {
@@ -54,5 +61,6 @@ export default {
   getAppDataPath,
   getPlatform,
   openExternal,
+  revealInFolder,
   isEncryptionAvailable
 }
