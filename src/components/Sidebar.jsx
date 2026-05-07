@@ -230,25 +230,26 @@ function Sidebar({ isOpen, onSelectConversation, onOpenSettings, sidebarOpen, on
                             <MoreVerticalIcon className="h-5 w-5" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-44">
+                        <DropdownMenuContent align="end" className="w-48 rounded-xl shadow-lg border border-border p-1">
                           <DropdownMenuItem
                             onClick={(e) => {
                               e.stopPropagation()
                               handleEditClick(conv)
                             }}
+                            className="rounded-lg px-3 py-2 cursor-pointer"
                           >
-                            <PencilIcon className="h-4 w-4 mr-3" />
-                            <span className="text-sm">Rename</span>
+                            <PencilIcon className="h-4 w-4 mr-3" strokeWidth={1.75} />
+                            <span className="text-sm font-medium">Rename</span>
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={(e) => {
                               e.stopPropagation()
                               handleDeleteClick(conv)
                             }}
-                            className="text-destructive focus:text-destructive"
+                            className="rounded-lg px-3 py-2 cursor-pointer text-red-600 hover:!text-red-600 hover:!bg-red-50 focus:!text-red-600 focus:!bg-red-50"
                           >
-                            <TrashIcon className="h-4 w-4 mr-3" />
-                            <span className="text-sm">Delete</span>
+                            <TrashIcon className="h-4 w-4 mr-3" strokeWidth={1.75} />
+                            <span className="text-sm font-medium">Delete</span>
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
