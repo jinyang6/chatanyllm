@@ -142,7 +142,7 @@ const ProviderModelBar = memo(({ onOpenSettings }) => {
             Network Error
           </div>
         )}
-        {fetchStatus.errorType === ERROR_TYPES.NO_API_KEY && (
+        {(fetchStatus.errorType === ERROR_TYPES.NO_API_KEY || (needsApiKey && !hasApiKey)) && (
           <div className="bg-red-600 text-white rounded-full h-8 pl-1.5 pr-3 flex items-center gap-1.5 text-sm font-medium">
             <div className="h-6 w-6 rounded-full bg-red-800/50 flex items-center justify-center">
               <KeyIcon className="h-3.5 w-3.5" strokeWidth={1.75} />

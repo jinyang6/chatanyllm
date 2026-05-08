@@ -12,21 +12,43 @@ export const ERROR_TYPES = {
 }
 
 /**
- * Categorize error based on error message
+ * Typed error class for API-level errors
+ */
+export class ApiError extends Error {
+  constructor(message, type) {
+    super(message)
+    this.name = 'ApiError'
+    this.type = type
+  }
+}
+
+/**
+ * Categorize error using standard web API patterns:
+ * - error.status   → HTTP status code (attached by provider fetchers)
+ * - error.name     → native DOMException name (AbortError = timeout)
+ * - error.type     → our own ApiError type
+ * - instanceof TypeError → fetch() network failure in browsers
+ * Falls back to string matching only for unknown error sources.
  */
 function categorizeError(error) {
+  // Native network errors (browser standard)
+  if (error.name === 'AbortError') return ERROR_TYPES.NETWORK_ERROR
+  if (error instanceof TypeError) return ERROR_TYPES.NETWORK_ERROR
+
+  // HTTP status codes (attached by provider fetchers, industry standard)
+  if (error.status === 400 || error.status === 401 || error.status === 403) return ERROR_TYPES.INVALID_KEY
+
+  // Our own ApiError type
+  if (error.type) return error.type
+
+  // Legacy fallback — string matching for errors without proper properties
   const message = error.message.toLowerCase()
 
   if (message.includes('api key not configured') || message.includes('api key is required')) {
     return ERROR_TYPES.NO_API_KEY
   }
-
   if (message.includes('invalid api key') || message.includes('401') || message.includes('403')) {
     return ERROR_TYPES.INVALID_KEY
-  }
-
-  if (message.includes('timeout') || message.includes('network') || message.includes('fetch failed') || message.includes('aborted')) {
-    return ERROR_TYPES.NETWORK_ERROR
   }
 
   return ERROR_TYPES.OTHER_ERROR
@@ -86,7 +108,7 @@ export function useModelFetcher() {
     // Check if API key is available
     const apiKey = apiKeys[providerId]
     if (!apiKey) {
-      const error = new Error('API key not configured. Please add your API key in Settings.')
+      const error = new ApiError('API key not configured. Please add your API key in Settings.', ERROR_TYPES.NO_API_KEY)
       setModelsFetchError(providerId, error.message, ERROR_TYPES.NO_API_KEY)
       throw error
     }

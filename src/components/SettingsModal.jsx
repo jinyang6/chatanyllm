@@ -77,23 +77,22 @@ function SettingsModal({ onClose }) {
   }
 
   const handleSave = async (showNotification = true) => {
-    // Auto-fetch models for providers with valid API keys
-    for (const prov of allProviders) {
-      if (apiKeys[prov.id] && prov.supportsDynamicFetch !== false) {
-        try {
-          await fetchModels(prov.id, false) // Don't force refresh, use cache if available
-        } catch (error) {
-          // Silently fail, user can manually refresh
-          console.error(`Failed to fetch models for ${prov.name}:`, error)
-        }
-      }
-    }
-
     if (showNotification) {
       showSuccess(
         'Settings Saved',
         'Your configuration has been saved successfully.'
       )
+    }
+
+    // Fetch models in background — don't block the UI
+    for (const prov of allProviders) {
+      if (apiKeys[prov.id] && prov.supportsDynamicFetch !== false) {
+        try {
+          await fetchModels(prov.id, false)
+        } catch (error) {
+          console.error(`Failed to fetch models for ${prov.name}:`, error)
+        }
+      }
     }
   }
 

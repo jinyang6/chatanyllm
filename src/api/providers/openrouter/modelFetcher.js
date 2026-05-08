@@ -26,12 +26,12 @@ export async function fetchOpenRouterModels(apiKey) {
 
     if (!response.ok) {
       if (response.status === 401 || response.status === 403) {
-        throw new Error('Invalid API key. Please check your OpenRouter API key.')
+        throw Object.assign(new Error('Invalid API key. Please check your OpenRouter API key.'), { status: response.status })
       }
       if (response.status === 429) {
-        throw new Error('Rate limited. Please try again in a minute.')
+        throw Object.assign(new Error('Rate limited. Please try again in a minute.'), { status: response.status })
       }
-      throw new Error(`Failed to fetch models: ${response.statusText}`)
+      throw Object.assign(new Error(`Failed to fetch models: ${response.statusText}`), { status: response.status })
     }
 
     const data = await response.json()
@@ -86,7 +86,7 @@ export async function fetchOpenRouterModels(apiKey) {
   } catch (error) {
     clearTimeout(timeoutId)
     if (error.name === 'AbortError') {
-      throw new Error('Request timeout. Please check your connection.')
+      throw Object.assign(new Error('Request timeout. Please check your connection.'), { name: 'AbortError' })
     }
     throw error
   }

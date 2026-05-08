@@ -29,12 +29,12 @@ export async function fetchCustomProviderModels(providerConfig, apiKey) {
 
     if (!response.ok) {
       if (response.status === 401 || response.status === 403) {
-        throw new Error('Invalid API key for custom provider.')
+        throw Object.assign(new Error('Invalid API key for custom provider.'), { status: response.status })
       }
       if (response.status === 429) {
-        throw new Error('Rate limited. Please try again later.')
+        throw Object.assign(new Error('Rate limited. Please try again later.'), { status: response.status })
       }
-      throw new Error(`Failed to fetch models: ${response.statusText}`)
+      throw Object.assign(new Error(`Failed to fetch models: ${response.statusText}`), { status: response.status })
     }
 
     const data = await response.json()
@@ -56,7 +56,7 @@ export async function fetchCustomProviderModels(providerConfig, apiKey) {
   } catch (error) {
     clearTimeout(timeoutId)
     if (error.name === 'AbortError') {
-      throw new Error('Request timeout. Please check your connection.')
+      throw Object.assign(new Error('Request timeout. Please check your connection.'), { name: 'AbortError' })
     }
     throw error
   }
