@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button'
-import { CheckCircle as CheckCircleIcon, XCircle as XCircleIcon, Loader2 as LoaderIcon } from 'lucide-react'
+import { Signal as SignalIcon, CheckCircle as CheckCircleIcon, XCircle as XCircleIcon, Loader2 as LoaderIcon } from 'lucide-react'
 
 export function TestConnectionButton({
   providerId,
@@ -63,7 +63,7 @@ export function TestConnectionButton({
         )
       ) : (
         <>
-          <CheckCircleIcon className={iconClass} />
+          <SignalIcon className={iconClass} />
           Test Connection
         </>
       )}
