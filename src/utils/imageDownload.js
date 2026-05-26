@@ -10,14 +10,40 @@ import { showPillToast } from '@/components/ui/toast-pill'
  */
 export async function downloadImage(imageUrl, suggestedName = 'image.png') {
   try {
-    // Ensure filename has .png extension
-    const filename = suggestedName.endsWith('.png')
-      ? suggestedName
-      : `${suggestedName}.png`
+    // Determine filename with proper extension
+    let filename = suggestedName
+    if (!filename.includes('.')) {
+      const urlName = extractFilename(imageUrl, '')
+      filename = (urlName && urlName.includes('.')) ? urlName : `${suggestedName}.png`
+    }
+
+    // For external URLs, fetch the image bytes first
+    let resolvedUrl = imageUrl
+    let blobUrl = null
+
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+      const response = await fetch(imageUrl)
+      if (!response.ok) throw new Error(`Failed to load image (HTTP ${response.status})`)
+      const blob = await response.blob()
+
+      if (isElectron()) {
+        // Convert to data URL for Electron's writeBinaryFile (expects base64)
+        resolvedUrl = await new Promise((resolve, reject) => {
+          const reader = new FileReader()
+          reader.onload = () => resolve(reader.result)
+          reader.onerror = () => reject(new Error('Failed to convert image'))
+          reader.readAsDataURL(blob)
+        })
+      } else {
+        // Create blob URL (same-origin) so the download attribute works in browser
+        blobUrl = URL.createObjectURL(blob)
+        resolvedUrl = blobUrl
+      }
+    }
 
     if (isElectron()) {
       // Electron: Show save dialog and write binary file
-      const result = await fileSystem.saveImage(imageUrl, filename)
+      const result = await fileSystem.saveImage(resolvedUrl, filename)
 
       if (result.canceled) {
         return { success: false, canceled: true }
@@ -37,19 +63,24 @@ export async function downloadImage(imageUrl, suggestedName = 'image.png') {
     } else {
       // Browser: Trigger download using <a> element
       const link = document.createElement('a')
-      link.href = imageUrl
+      link.href = resolvedUrl
       link.download = filename
       link.style.display = 'none'
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
 
+      // Clean up blob URL after download initiates
+      if (blobUrl) {
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 100)
+      }
+
       showPillToast('Saved', { duration: 4000 })
       return { success: true }
     }
   } catch (error) {
     console.error('Download error:', error)
-    showPillToast(`Failed to download image: ${error.message}`)
+    showPillToast(`Failed to download: ${error.message}`)
     return { success: false, error: error.message }
   }
 }
@@ -77,6 +108,23 @@ export function extractImageName(imageUrl, defaultName = 'image.png') {
     }
 
     return defaultName
+  } catch {
+    return defaultName
+  }
+}
+
+/**
+ * Extract filename from any URL (generic, not image-specific)
+ * @param {string} url - The URL to extract filename from
+ * @param {string} defaultName - Default name if extraction fails
+ * @returns {string} - Extracted or default filename
+ */
+export function extractFilename(url, defaultName = 'download') {
+  try {
+    if (url.startsWith('data:')) return defaultName
+    const pathname = new URL(url).pathname
+    const name = pathname.substring(pathname.lastIndexOf('/') + 1)
+    return name && name.includes('.') ? name : defaultName
   } catch {
     return defaultName
   }

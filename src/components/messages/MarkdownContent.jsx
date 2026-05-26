@@ -102,8 +102,8 @@ export const MemoizedMarkdownContent = memo(({ content, onImageClick }) => {
         tr: ({ children }) => <tr className="border-b border-border">{children}</tr>,
         th: ({ children }) => <th className="px-4 py-2 text-left font-semibold text-gray-900 dark:text-gray-100">{children}</th>,
         td: ({ children }) => <td className="px-4 py-2 text-gray-900 dark:text-gray-100">{children}</td>,
-        a: ({ href, children }) => (
-          <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+        a: ({ href, children, ...rest }) => (
+          <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline" {...rest}>
             {children}
           </a>
         ),
@@ -112,10 +112,11 @@ export const MemoizedMarkdownContent = memo(({ content, onImageClick }) => {
         h3: ({ children }) => <h3 className="text-lg font-semibold mt-3 mb-1 text-gray-900 dark:text-gray-100">{children}</h3>,
         h4: ({ children }) => <h4 className="text-base font-semibold mt-2 mb-1 text-gray-900 dark:text-gray-100">{children}</h4>,
         hr: () => <hr className="my-4 border-border" />,
-        img: ({ src, alt }) => (
+        img: ({ src, alt, ...rest }) => (
           <img
             src={src}
             alt={alt || 'Image'}
+            {...rest}
             className="max-w-full h-auto rounded-lg my-3 cursor-pointer hover:opacity-90 border border-border"
             onClick={() => onImageClick({ url: src, name: extractImageName(src, alt || 'markdown-image.png') })}
             onError={(e) => {
@@ -134,6 +135,8 @@ export const MemoizedMarkdownContent = memo(({ content, onImageClick }) => {
         i: createRefSafeComponent('i'),
         strong: createRefSafeComponent('strong'),
         em: createRefSafeComponent('em'),
+        video: (props) => <video controls className="w-full max-w-full rounded-lg my-3" {...props} />,
+        audio: (props) => <audio controls className="w-full my-2" {...props} />,
       }}
     >
       {processedContent}

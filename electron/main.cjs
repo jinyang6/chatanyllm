@@ -11,7 +11,7 @@ try {
     process.exit(1)
   }
 
-  ;({ app, BrowserWindow, ipcMain, dialog, shell, safeStorage } = electron)
+  ;({ app, BrowserWindow, ipcMain, dialog, shell, safeStorage, session } = electron)
 
   if (!app || !BrowserWindow) {
     console.error('ERROR: Electron modules not properly loaded')
@@ -56,6 +56,22 @@ app.whenReady().then(() => {
   if (process.platform === 'win32') {
     app.setAppUserModelId('com.chatanyllm.app')
   }
+
+  // Inject CORS headers so the renderer can fetch cross-origin media for download
+  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        'Access-Control-Allow-Origin': ['*']
+      }
+    })
+  })
+
+  // Redirect native media downloads (video/audio controls) to default browser
+  session.defaultSession.on('will-download', (event, item) => {
+    event.preventDefault()
+    shell.openExternal(item.getURL())
+  })
 
   mainWindow = createWindow({
     BrowserWindow,

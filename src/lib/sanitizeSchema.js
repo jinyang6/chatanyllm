@@ -14,6 +14,7 @@ export const minimalSanitizeSchema = {
     'video', 'audio', 'source', 'track',
     'svg', 'path', 'circle', 'rect', 'line', 'polygon',
     'details', 'summary', 'dialog',
+    'figure', 'figcaption',
     // KaTeX math rendering tags
     'math', 'semantics', 'mrow', 'mi', 'mo', 'mn', 'msup', 'msub', 'mfrac',
     'mtext', 'annotation', 'annotation-xml',
