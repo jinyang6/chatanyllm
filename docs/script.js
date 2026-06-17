@@ -31,14 +31,16 @@ async function fetchGitHubDownloads() {
 
     const releases = await response.json();
 
-    let totalDownloads = 0;
+    const SKIP_VERSIONS = ['v1.0.9'] // messy counts from repeated curl/CI
+    let totalDownloads = 0
     releases.forEach(release => {
+      if (SKIP_VERSIONS.includes(release.tag_name)) return
       release.assets.forEach(asset => {
         if (asset.name.endsWith('.exe') && asset.name.includes('Setup')) {
-          totalDownloads += asset.download_count;
+          totalDownloads += asset.download_count
         }
-      });
-    });
+      })
+    })
 
     return totalDownloads;
   } catch (error) {
