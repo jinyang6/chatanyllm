@@ -31,7 +31,7 @@ async function fetchGitHubDownloads() {
 
     const releases = await response.json();
 
-    const SKIP_VERSIONS = ['v1.0.9'] // messy counts from repeated curl/CI
+    const SKIP_VERSIONS = ['v1.0.9'] // skip inflated counts from repeated curl/CI testing
     let totalDownloads = 0
     releases.forEach(release => {
       if (SKIP_VERSIONS.includes(release.tag_name)) return
