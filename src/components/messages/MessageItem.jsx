@@ -90,7 +90,7 @@ export const MessageItem = memo(({
                 <Button
                   size="sm"
                   onClick={onSaveEdit}
-                  className="h-8 bg-green-600 text-white hover:bg-green-700 border-2 border-green-700 font-medium shadow-sm transition-colors"
+                  className="h-8 bg-[#1f883d] text-white hover:bg-[#186b2f] border-2 border-[#186b2f] font-medium shadow-sm transition-colors"
                 >
                   <CheckIcon className="h-4 w-4 mr-1" />
                   Save & Regenerate
