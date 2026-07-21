@@ -40,6 +40,13 @@ Download the latest installer from [Releases](../../releases) or visit our [webs
 - `Shift+Enter` - New line
 - `Ctrl+V` - Paste image
 
+## Article
+
+Read more about ChatAnyLLM:
+
+- Read "How to Switch AI Models Without Losing Your Context" on [Medium](https://medium.com/@1804926965/how-to-switch-ai-models-without-losing-your-context-and-why-i-built-a-free-tool-to-do-it-24941cbcc0d2).
+- Also available on [SourceForge](https://sourceforge.net/projects/chatanyllm/).
+
 ## Technology Stack
 
 Electron • React • Vite • Tailwind CSS
