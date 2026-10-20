@@ -3,7 +3,7 @@
  * Uses Google Generative AI API with streaming
  */
 
-import { validateChatParams, getErrorMessageFromResponse, handleNetworkError } from '@/core/chat/utils/chatUtils'
+import { validateChatParams, getErrorMessageFromResponse, handleNetworkError, normalizeGeminiUsage } from '@/core/chat/utils/chatUtils'
 import { getProviderById } from '@/config/providers'
 
 export async function sendStreamingMessage({
@@ -26,6 +26,7 @@ export async function sendStreamingMessage({
   let fullReasoning = ''
   let reasoningDone = false
   let completeCalled = false
+  let usageMetadata = null
 
   try {
     // Validate required parameters
@@ -187,6 +188,8 @@ export async function sendStreamingMessage({
           try {
             const parsed = JSON.parse(data)
 
+            if (parsed.usageMetadata) usageMetadata = parsed.usageMetadata
+
             // Extract text from candidates
             const candidates = parsed.candidates
             if (candidates && candidates.length > 0) {
@@ -247,7 +250,7 @@ export async function sendStreamingMessage({
     // Call onComplete callback once
     if (!completeCalled) {
       completeCalled = true
-      onComplete(fullContent)
+      onComplete(fullContent, { usage: normalizeGeminiUsage(usageMetadata) })
     }
   } catch (error) {
     // Handle abort signal
@@ -265,7 +268,7 @@ export async function sendStreamingMessage({
       // Finalize with partial content
       if (!completeCalled) {
         completeCalled = true
-        onComplete(fullContent)
+        onComplete(fullContent, { usage: normalizeGeminiUsage(usageMetadata) })
       }
 
       return

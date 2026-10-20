@@ -85,9 +85,59 @@ export function handleNetworkError(error, providerName = 'API') {
   return error.message || 'An unexpected error occurred. Please try again.'
 }
 
+/**
+ * Normalize provider-specific usage objects into one shape.
+ * Missing fields stay null; callers may fall back to character estimates.
+ */
+export function normalizeOpenAIUsage(usage) {
+  if (!usage) return null
+  const promptTokens = usage.prompt_tokens ?? null
+  const completionTokens = usage.completion_tokens ?? null
+  const totalTokens = usage.total_tokens ?? null
+  const reasoningTokens = usage.completion_tokens_details?.reasoning_tokens ?? null
+  const cachedTokens = usage.prompt_tokens_details?.cached_tokens ?? null
+
+  if (promptTokens == null && completionTokens == null && totalTokens == null) return null
+
+  return { promptTokens, completionTokens, totalTokens, reasoningTokens, cachedTokens }
+}
+
+export function normalizeAnthropicUsage(usage) {
+  if (!usage) return null
+  const promptTokens = usage.input_tokens ?? null
+  const completionTokens = usage.output_tokens ?? null
+  const totalTokens = promptTokens != null || completionTokens != null
+    ? (promptTokens || 0) + (completionTokens || 0)
+    : null
+  const cachedTokens = (usage.cache_read_input_tokens || 0) + (usage.cache_creation_input_tokens || 0) || null
+
+  if (promptTokens == null && completionTokens == null) return null
+
+  return { promptTokens, completionTokens, totalTokens, reasoningTokens: null, cachedTokens }
+}
+
+export function normalizeGeminiUsage(usageMetadata) {
+  if (!usageMetadata) return null
+  const promptTokens = usageMetadata.promptTokenCount ?? null
+  const candidates = usageMetadata.candidatesTokenCount ?? null
+  const thoughts = usageMetadata.thoughtsTokenCount ?? null
+  const completionTokens = candidates != null || thoughts != null
+    ? (candidates || 0) + (thoughts || 0)
+    : null
+  const totalTokens = usageMetadata.totalTokenCount ?? null
+  const cachedTokens = usageMetadata.cachedContentTokenCount ?? null
+
+  if (promptTokens == null && completionTokens == null && totalTokens == null) return null
+
+  return { promptTokens, completionTokens, totalTokens, reasoningTokens: thoughts, cachedTokens }
+}
+
 export default {
   validateChatParams,
   sanitizeBaseUrl,
   getErrorMessageFromResponse,
-  handleNetworkError
+  handleNetworkError,
+  normalizeOpenAIUsage,
+  normalizeAnthropicUsage,
+  normalizeGeminiUsage
 }

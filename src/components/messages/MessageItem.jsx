@@ -6,12 +6,21 @@ import { Textarea } from '@/components/ui/textarea'
 import { Bot as BotIcon, User as UserIcon, RefreshCw as RefreshCwIcon, Pencil as PencilIcon, Check as CheckIcon, X as XIcon, Trash2 as Trash2Icon, Loader, LoaderCircle, ChevronDown, ChevronUp } from 'lucide-react'
 import { CopyButton } from '@/components/ui/copy-button'
 import { AttachmentList } from '@/components/ui/attachment-list'
-import { formatTimestamp, formatModelName, parseGeneratedImages } from './messageUtils'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { formatTimestamp, formatModelName, parseGeneratedImages, formatDuration, formatNumber, formatTokensPerSecond, getMetricsView } from './messageUtils'
 import { MemoizedMarkdownContent } from './MarkdownContent'
 import { ThinkingSection } from './ThinkingSection'
 import { ResolvedImage } from './ResolvedImage'
 
 // ─── MessageItem ──────────────────────────────────────────────────────────────
+
+const Fraction = ({ numerator, denominator }) => (
+  <span className="inline-flex flex-col items-center leading-tight tabular-nums text-gray-300">
+    <span>{numerator}</span>
+    <span className="my-0.5 h-px w-full bg-gray-500" />
+    <span>{denominator}</span>
+  </span>
+)
 
 export const MessageItem = memo(({
   message,
@@ -37,6 +46,11 @@ export const MessageItem = memo(({
 }) => {
   const isGenerating = isStreaming && isLastMessage && message.role === 'assistant'
   const modelName = formatModelName(message.model)
+  const metrics = getMetricsView(message.metrics)
+  const tokenSpeed = metrics?.tokensPerSecond
+  const hasTokenSpeed = tokenSpeed != null && tokenSpeed > 0
+  const durationMs = metrics?.durationMs
+  const showAssistantMetrics = message.role === 'assistant' && (hasTokenSpeed || durationMs != null)
 
   const { cleanContent, images: generatedImages } = useMemo(
     () => parseGeneratedImages(message.content),
@@ -107,6 +121,9 @@ export const MessageItem = memo(({
                   isExpanded={isThinkingExpanded}
                   onToggle={onToggleThinking}
                   scrollRef={thinkingScrollRef}
+                  isGenerating={isGenerating}
+                  startedAt={message.timestamp}
+                  metrics={metrics}
                 />
               )}
 
@@ -174,7 +191,38 @@ export const MessageItem = memo(({
         <div className={`flex items-center gap-2 mt-2 text-xs text-muted-foreground ${
           message.role === 'user' ? 'justify-end' : 'justify-start'
         }`}>
-          <span className="opacity-75">{formatTimestamp(message.timestamp)}</span>
+          {message.role === 'assistant' && showAssistantMetrics ? (
+            hasTokenSpeed ? (
+              <TooltipProvider delayDuration={150}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="font-medium tabular-nums cursor-help">
+                      {formatTokensPerSecond(tokenSpeed)}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <div className="flex items-center gap-1.5 text-left tabular-nums">
+                      <span className="font-medium">
+                        {formatTokensPerSecond(tokenSpeed)} =
+                      </span>
+                      <Fraction
+                        numerator={`${formatNumber(metrics.completionTokens)} tokens`}
+                        denominator={metrics?.generationMs != null && metrics.generationMs > 0
+                          ? `${formatDuration(metrics.generationMs)} generation`
+                          : `${formatDuration(durationMs)} total`}
+                      />
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            ) : (
+              <span className="font-medium tabular-nums">
+                {formatDuration(durationMs)}
+              </span>
+            )
+          ) : (
+            <span className="opacity-75">{formatTimestamp(message.timestamp)}</span>
+          )}
           {message.role === 'assistant' && (message.provider || modelName) && (
             <>
               <span className="opacity-50">•</span>
@@ -262,6 +310,7 @@ export const MessageItem = memo(({
   if (prevProps.message.content !== nextProps.message.content) return false
   if (prevProps.message.reasoning !== nextProps.message.reasoning) return false
   if (prevProps.message.isReasoningComplete !== nextProps.message.isReasoningComplete) return false
+  if (prevProps.message.metrics !== nextProps.message.metrics) return false
   if (prevProps.isStreaming !== nextProps.isStreaming) return false
   if (prevProps.isLastMessage !== nextProps.isLastMessage) return false
   if (prevProps.isLastUserMessage !== nextProps.isLastUserMessage) return false

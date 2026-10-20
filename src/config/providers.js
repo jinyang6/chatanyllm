@@ -1,3 +1,17 @@
+/**
+ * OpenAI-compatible streaming delta field names.
+ *
+ * Reasoning is not part of the OpenAI Chat Completions spec, so providers use
+ * different keys. The adapter checks each list in order and uses the first
+ * matching value. Add new provider keys here when their APIs change.
+ */
+export const DELTA_KEYS = {
+  reasoning: ['reasoning_content', 'reasoning', 'reasoning_text', 'thinking', 'analysis'],
+  content: ['content'],
+  images: ['images'],
+  toolCalls: ['tool_calls', 'function_call']
+}
+
 export const PROVIDERS = [
   {
     id: 'openrouter',

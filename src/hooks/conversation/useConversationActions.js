@@ -70,6 +70,7 @@ export function useConversationActions(setConversations, conversationsRef, curre
       content: message.content,
       reasoning: message.reasoning || '',
       isReasoningComplete: message.isReasoningComplete || false,
+      metrics: message.metrics || null,
       timestamp: new Date().toISOString(),
       model: message.model || null,
       provider: message.provider || null,
