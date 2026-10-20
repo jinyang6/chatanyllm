@@ -12,6 +12,20 @@ export const DELTA_KEYS = {
   toolCalls: ['tool_calls', 'function_call']
 }
 
+/**
+ * Additional model-catalog paths tried when a provider's default /models
+ * response doesn't expose useful metadata. Resolved against the provider
+ * origin, so this stays generic rather than provider-specific.
+ */
+export const MODEL_ENDPOINT_CANDIDATES = [
+  '/public/v1/models?format=openrouter',
+  '/public/v1/models',
+  '/v1/language-models',
+  '/openai/v1/models',
+  '/v1/models',
+  '/models'
+]
+
 export const PROVIDERS = [
   {
     id: 'openrouter',
