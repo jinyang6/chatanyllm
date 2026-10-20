@@ -95,11 +95,12 @@ export function normalizeOpenAIUsage(usage) {
   const completionTokens = usage.completion_tokens ?? null
   const totalTokens = usage.total_tokens ?? null
   const reasoningTokens = usage.completion_tokens_details?.reasoning_tokens ?? null
+  const imageTokens = usage.completion_tokens_details?.image_tokens ?? null
   const cachedTokens = usage.prompt_tokens_details?.cached_tokens ?? null
 
   if (promptTokens == null && completionTokens == null && totalTokens == null) return null
 
-  return { promptTokens, completionTokens, totalTokens, reasoningTokens, cachedTokens }
+  return { promptTokens, completionTokens, totalTokens, reasoningTokens, imageTokens, cachedTokens }
 }
 
 export function normalizeAnthropicUsage(usage) {
