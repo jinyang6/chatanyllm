@@ -1,3 +1,31 @@
+/**
+ * OpenAI-compatible streaming delta field names.
+ *
+ * Reasoning is not part of the OpenAI Chat Completions spec, so providers use
+ * different keys. The adapter checks each list in order and uses the first
+ * matching value. Add new provider keys here when their APIs change.
+ */
+export const DELTA_KEYS = {
+  reasoning: ['reasoning_content', 'reasoning', 'reasoning_text', 'thinking', 'analysis'],
+  content: ['content'],
+  images: ['images'],
+  toolCalls: ['tool_calls', 'function_call']
+}
+
+/**
+ * Additional model-catalog paths tried when a provider's default /models
+ * response doesn't expose useful metadata. Resolved against the provider
+ * origin, so this stays generic rather than provider-specific.
+ */
+export const MODEL_ENDPOINT_CANDIDATES = [
+  '/public/v1/models?format=openrouter',
+  '/public/v1/models',
+  '/v1/language-models',
+  '/openai/v1/models',
+  '/v1/models',
+  '/models'
+]
+
 export const PROVIDERS = [
   {
     id: 'openrouter',

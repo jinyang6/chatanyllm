@@ -4,8 +4,19 @@
  * Updated: 2025-01-15
  */
 
-import { validateChatParams, getErrorMessageFromResponse, handleNetworkError } from '@/core/chat/utils/chatUtils'
-import { getProviderById } from '@/config/providers'
+import { validateChatParams, getErrorMessageFromResponse, handleNetworkError, normalizeOpenAIUsage } from '@/core/chat/utils/chatUtils'
+import { getProviderById, DELTA_KEYS } from '@/config/providers'
+
+/**
+ * Return the first key from `keys` that exists on the delta object.
+ */
+function getDeltaValue(delta, keys) {
+  if (!delta) return undefined
+  for (const key of keys) {
+    if (delta[key] !== undefined && delta[key] !== null) return delta[key]
+  }
+  return undefined
+}
 
 export async function sendStreamingMessage({
   apiKey,
@@ -30,6 +41,7 @@ export async function sendStreamingMessage({
   let fullReasoning = ''
   let reasoningDone = false
   let completeCalled = false
+  let usage = null
 
   try {
     // Validate required parameters
@@ -47,6 +59,13 @@ export async function sendStreamingMessage({
     if (topP !== null) requestBody.top_p = topP
     if (frequencyPenalty !== null) requestBody.frequency_penalty = frequencyPenalty
     if (presencePenalty !== null) requestBody.presence_penalty = presencePenalty
+
+    // OpenAI only returns usage while streaming when explicitly requested.
+    // Other OpenAI-compatible providers return it by default, and some strict
+    // gateways reject unknown stream_options, so scope this to OpenAI.
+    if (/api\.openai\.com/i.test(baseUrl)) {
+      requestBody.stream_options = { include_usage: true }
+    }
 
     // Add modalities for image generation if specified
     if (modalities && Array.isArray(modalities)) {
@@ -122,24 +141,19 @@ export async function sendStreamingMessage({
           try {
             const parsed = JSON.parse(data)
 
+            if (parsed.usage) usage = parsed.usage
+
             // Extract content from delta
             const delta = parsed.choices?.[0]?.delta
 
-            // Handle reasoning tokens from multiple possible fields
-            // OpenRouter returns reasoning in delta.reasoning for DeepSeek R1 and similar models
+            // Reasoning field names differ between OpenAI-compatible providers.
+            // Check the configured key list; use the first string value found.
             let reasoningText = null
-
-            // Check standard reasoning field
-            if (delta?.reasoning) {
-              reasoningText = delta.reasoning
-            }
-            // Check reasoning_details array (alternative structure)
-            else if (delta?.reasoning_details && Array.isArray(delta.reasoning_details)) {
-              const reasoningParts = delta.reasoning_details
-                .filter(part => part.type === 'reasoning.text' && part.text)
-                .map(part => part.text)
-              if (reasoningParts.length > 0) {
-                reasoningText = reasoningParts.join('')
+            for (const key of DELTA_KEYS.reasoning) {
+              const value = delta?.[key]
+              if (typeof value === 'string' && value) {
+                reasoningText = value
+                break
               }
             }
 
@@ -149,27 +163,29 @@ export async function sendStreamingMessage({
               onReasoningChunk(reasoningText, fullReasoning)
             }
 
+            const content = getDeltaValue(delta, DELTA_KEYS.content)
+
             // When content starts, reasoning is complete
-            if (delta?.content && fullReasoning && !reasoningDone && onReasoningComplete) {
+            if (content && fullReasoning && !reasoningDone && onReasoningComplete) {
               onReasoningComplete()
               reasoningDone = true
             }
 
             // Handle regular content
-            if (delta?.content) {
-              fullContent += delta.content
-              onChunk(delta.content, fullContent)
+            if (typeof content === 'string' && content) {
+              fullContent += content
+              onChunk(content, fullContent)
             }
 
             // Handle tool/function calls (for future implementation)
-            if (delta?.tool_calls || delta?.function_call) {
+            if (getDeltaValue(delta, DELTA_KEYS.toolCalls)) {
               // TODO: Implement proper tool call handling
               // For now, log and continue
             }
 
             // Check for image_url type content (multimodal responses)
-            if (Array.isArray(delta?.content)) {
-              for (const part of delta.content) {
+            if (Array.isArray(content)) {
+              for (const part of content) {
                 if (part.type === 'image_url' && part.image_url?.url) {
                   const imageMarkdown = `\n![Generated Image](${part.image_url.url})\n`
                   fullContent += imageMarkdown
@@ -180,9 +196,9 @@ export async function sendStreamingMessage({
 
             // Handle OpenRouter image generation response format
             // Images are returned in delta.images array
-            if (delta?.images && Array.isArray(delta.images)) {
-              // Removed console.log for performance during streaming
-              for (const image of delta.images) {
+            const images = getDeltaValue(delta, DELTA_KEYS.images)
+            if (Array.isArray(images)) {
+              for (const image of images) {
                 const imageUrl = image.image_url?.url || image.url
                 if (imageUrl) {
                   // Use special marker for images - will be parsed separately from markdown
@@ -195,9 +211,9 @@ export async function sendStreamingMessage({
 
             // Also check for images in the main message (some models return here)
             const message = parsed.choices?.[0]?.message
-            if (message?.images && Array.isArray(message.images)) {
-              // Removed console.log for performance during streaming
-              for (const image of message.images) {
+            const messageImages = getDeltaValue(message, DELTA_KEYS.images)
+            if (Array.isArray(messageImages)) {
+              for (const image of messageImages) {
                 const imageUrl = image.image_url?.url || image.url
                 if (imageUrl) {
                   // Use special marker for images - will be parsed separately from markdown
@@ -210,11 +226,9 @@ export async function sendStreamingMessage({
 
             // Removed non-content delta logging for performance
 
-            // Check if stream is finished
-            if (parsed.choices?.[0]?.finish_reason) {
-              // Stream ended normally
-              break
-            }
+            // Keep reading after finish_reason so a trailing usage chunk in the
+            // same network read is still captured. The stream ends on [DONE] or
+            // reader completion.
           } catch (parseError) {
             // Log parsing errors but continue processing other chunks
             if (process.env.NODE_ENV === 'development') {
@@ -238,7 +252,7 @@ export async function sendStreamingMessage({
     // Call onComplete callback once
     if (!completeCalled) {
       completeCalled = true
-      onComplete(fullContent)
+      onComplete(fullContent, { usage: normalizeOpenAIUsage(usage) })
     }
   } catch (error) {
     // Handle abort signal
@@ -256,7 +270,7 @@ export async function sendStreamingMessage({
       // Finalize with partial content
       if (!completeCalled) {
         completeCalled = true
-        onComplete(fullContent)
+        onComplete(fullContent, { usage: normalizeOpenAIUsage(usage) })
       }
 
       return

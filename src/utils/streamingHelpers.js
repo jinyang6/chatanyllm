@@ -4,6 +4,8 @@
 
 import { getModalitiesForModel, getReasoningConfig } from '@/core/model/ModelUtils'
 
+const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now())
+
 /**
  * Create streaming callbacks configuration
  * @param {Object} config - Configuration object
@@ -27,13 +29,19 @@ export function createStreamingCallbacks({
   onError,
   metadata = null
 }) {
+  const startedAt = metadata?.timestamp || new Date().toISOString()
+  const startedPerf = now()
+  let firstTokenPerf = null
+
   return {
     onChunk: (chunk, fullContent) => {
+      if (firstTokenPerf == null) firstTokenPerf = now()
       // Pass metadata to preserve model/provider during streaming updates
       updateLastMessage(fullContent, false, metadata, conversationId)
     },
 
     onReasoningChunk: (reasoningChunk, fullReasoning) => {
+      if (firstTokenPerf == null) firstTokenPerf = now()
       updateLastMessageReasoning(fullReasoning, false, conversationId)
     },
 
@@ -41,19 +49,32 @@ export function createStreamingCallbacks({
       markReasoningComplete(conversationId)
     },
 
-    onComplete: (fullContent) => {
+    onComplete: (fullContent, stats = {}) => {
+      const completedAt = new Date().toISOString()
+      const ttftMs = firstTokenPerf != null ? Math.max(0, Math.round(firstTokenPerf - startedPerf)) : null
+
+      // Store only measured boundaries and the API's own usage numbers.
+      // Duration, generation time and tokens/sec are derived when rendering.
+      const metrics = {
+        startedAt,
+        completedAt,
+        ttftMs,
+        usage: stats.usage || null
+      }
+
       // Preserve reasoning state in metadata
       const targetConversation = getConversationById(conversationId)
       const lastMessage = targetConversation?.messages?.[targetConversation.messages.length - 1]
 
       // Only include reasoning properties if reasoning exists (prevents creating reasoning: undefined)
-      const finalMetadata = lastMessage ? {
+      const finalMetadata = {
         ...(metadata || {}),
-        ...(lastMessage.reasoning ? {
+        metrics,
+        ...(lastMessage?.reasoning ? {
           reasoning: lastMessage.reasoning,
           isReasoningComplete: lastMessage.isReasoningComplete || true
         } : {})
-      } : metadata
+      }
 
       updateLastMessage(fullContent, true, finalMetadata, conversationId)
       stopStreaming(conversationId)

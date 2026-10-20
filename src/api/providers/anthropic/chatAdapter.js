@@ -3,7 +3,7 @@
  * Handles Claude-specific API format and streaming
  */
 
-import { validateChatParams, getErrorMessageFromResponse, handleNetworkError } from '@/core/chat/utils/chatUtils'
+import { validateChatParams, getErrorMessageFromResponse, handleNetworkError, normalizeAnthropicUsage } from '@/core/chat/utils/chatUtils'
 import { getProviderById } from '@/config/providers'
 
 export async function sendStreamingMessage({
@@ -27,6 +27,7 @@ export async function sendStreamingMessage({
   let reasoningDone = false
   let completeCalled = false
   let currentBlockType = null // Track if we're in a thinking block
+  let usage = null
 
   try {
     // Validate required parameters
@@ -134,6 +135,9 @@ export async function sendStreamingMessage({
             switch (parsed.type) {
               case 'message_start':
                 // Message started
+                if (parsed.message?.usage) {
+                  usage = { ...(usage || {}), ...parsed.message.usage }
+                }
                 break
 
               case 'content_block_start':
@@ -175,6 +179,9 @@ export async function sendStreamingMessage({
 
               case 'message_delta':
                 // Message metadata update (e.g., stop_reason)
+                if (parsed.usage) {
+                  usage = { ...(usage || {}), ...parsed.usage }
+                }
                 break
 
               case 'message_stop':
@@ -217,7 +224,7 @@ export async function sendStreamingMessage({
     // Call onComplete callback once
     if (!completeCalled) {
       completeCalled = true
-      onComplete(fullContent)
+      onComplete(fullContent, { usage: normalizeAnthropicUsage(usage) })
     }
   } catch (error) {
     // Handle abort signal
@@ -235,7 +242,7 @@ export async function sendStreamingMessage({
       // Finalize with partial content
       if (!completeCalled) {
         completeCalled = true
-        onComplete(fullContent)
+        onComplete(fullContent, { usage: normalizeAnthropicUsage(usage) })
       }
 
       return

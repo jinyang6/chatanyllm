@@ -9,6 +9,9 @@ function setMainWindow(win) {
 }
 
 function cleanupUpdaterFolders() {
+  // Updater staging folders are Windows-specific.
+  if (process.platform !== 'win32') return
+
   try {
     const { app } = require('electron')
     const localAppData = process.env.LOCALAPPDATA || app.getPath('userData')
@@ -49,16 +52,19 @@ function cleanupUpdaterFolders() {
 }
 
 function initAutoUpdater() {
+  const { app } = require('electron')
   cleanupUpdaterFolders()
   autoUpdater.autoDownload = false
   autoUpdater.autoInstallOnAppQuit = true
   autoUpdater.autoUpdate = false
   autoUpdater.disableDifferentialDownload = true
-  autoUpdater.forceDevUpdateConfig = true
-  autoUpdater.devUpdateConfig = {
-    provider: 'github',
-    owner: 'jinyang6',
-    repo: 'chatanyllm'
+  autoUpdater.forceDevUpdateConfig = !app.isPackaged
+  if (!app.isPackaged) {
+    autoUpdater.devUpdateConfig = {
+      provider: 'github',
+      owner: 'jinyang6',
+      repo: 'chatanyllm'
+    }
   }
 
   autoUpdater.on('checking-for-update', () => {

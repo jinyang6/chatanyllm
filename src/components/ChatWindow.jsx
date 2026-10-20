@@ -262,11 +262,17 @@ function ChatWindow({ conversationId, onOpenSettings }) {
 
     const abortSignal = startStreaming(targetConversationId)
 
+    const requestStartedAt = new Date().toISOString()
     const sendMetadata = {
-      timestamp: new Date().toISOString(),
+      timestamp: requestStartedAt,
       model: currentModel,
-      provider: currentProvider
+      provider: currentProvider,
+      metrics: null
     }
+
+    // Align the assistant message with the actual request start before any
+    // reasoning/content arrives, so the live timer starts from send time.
+    updateLastMessage('', true, sendMetadata, targetConversationId)
 
     const streamingCallbacks = createStreamingCallbacks({
       conversationId: targetConversationId,
@@ -340,18 +346,23 @@ function ChatWindow({ conversationId, onOpenSettings }) {
       model: currentModel,
       provider: currentProvider,
       reasoning: '',
-      isReasoningComplete: false
+      isReasoningComplete: false,
+      metrics: null
     }
     updateLastMessage('', false, clearMetadata)
 
     const retryConversationId = currentConversationId
     const abortSignal = startStreaming(retryConversationId)
 
+    const retryStartedAt = new Date().toISOString()
     const streamingMetadata = {
-      timestamp: new Date().toISOString(),
+      timestamp: retryStartedAt,
       model: currentModel,
-      provider: currentProvider
+      provider: currentProvider,
+      metrics: null
     }
+
+    updateLastMessage('', true, streamingMetadata, retryConversationId)
 
     const streamingCallbacks = createStreamingCallbacks({
       conversationId: retryConversationId,
@@ -441,11 +452,15 @@ function ChatWindow({ conversationId, onOpenSettings }) {
 
     const abortSignal = startStreaming(editConversationId)
 
+    const editStartedAt = new Date().toISOString()
     const editMetadata = {
-      timestamp: new Date().toISOString(),
+      timestamp: editStartedAt,
       model: currentModel,
-      provider: currentProvider
+      provider: currentProvider,
+      metrics: null
     }
+
+    updateLastMessage('', true, editMetadata, editConversationId)
 
     const streamingCallbacks = createStreamingCallbacks({
       conversationId: editConversationId,

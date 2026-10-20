@@ -243,6 +243,7 @@ const arePropsEqual = (prevProps, nextProps) => {
     if (prevLast.content !== nextLast.content) return false
     if (prevLast.reasoning !== nextLast.reasoning) return false
     if (prevLast.isReasoningComplete !== nextLast.isReasoningComplete) return false
+    if (prevLast.metrics !== nextLast.metrics) return false
   }
 
   return true

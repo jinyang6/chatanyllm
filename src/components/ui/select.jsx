@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, memo, useCallback } from 'react'
+import ReactMarkdown from 'react-markdown'
 import { Check as CheckIcon, ChevronsUpDown as ChevronsUpDownIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -18,6 +19,35 @@ import { cn } from '@/lib/utils'
 
 const ITEMS_PER_PAGE = 50
 const LARGE_LIST_THRESHOLD = 100
+
+const INLINE_MARKDOWN_ELEMENTS = ['p', 'strong', 'em', 'code', 'a', 'br']
+const INLINE_MARKDOWN_COMPONENTS = {
+  p: ({ children }) => <>{children}</>,
+  a: ({ children }) => (
+    <span className="underline decoration-dotted underline-offset-2">
+      {children}
+    </span>
+  ),
+  strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+  em: ({ children }) => <em className="italic">{children}</em>,
+  code: ({ children }) => (
+    <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.9em]">
+      {children}
+    </code>
+  ),
+  br: () => <span> </span>
+}
+
+// Render only inline Markdown so model descriptions stay compact in the list.
+const InlineMarkdown = memo(({ children }) => (
+  <ReactMarkdown
+    allowedElements={INLINE_MARKDOWN_ELEMENTS}
+    unwrapDisallowed
+    components={INLINE_MARKDOWN_COMPONENTS}
+  >
+    {children}
+  </ReactMarkdown>
+))
 
 // Helper to render capability tag — memo prevents re-render when parent re-renders due to search
 const CapabilityTag = memo(({ label }) => {
@@ -49,7 +79,7 @@ const OptionRow = memo(({ option, isSelected, showDescription, selectedValue, on
         <div className="font-medium">{option.name}</div>
         {showDescription && option.description && (
           <div className="text-xs text-muted-foreground line-clamp-2">
-            {option.description}
+            <InlineMarkdown>{option.description}</InlineMarkdown>
           </div>
         )}
         {showDescription && (

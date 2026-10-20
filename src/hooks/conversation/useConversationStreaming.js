@@ -92,7 +92,8 @@ export function useConversationStreaming(setConversations, streamingConversation
           model: metadata.model || currentMessages[currentMessages.length - 1].model,
           provider: metadata.provider || currentMessages[currentMessages.length - 1].provider,
           reasoning: ('reasoning' in metadata) ? metadata.reasoning : currentMessages[currentMessages.length - 1].reasoning,
-          isReasoningComplete: ('isReasoningComplete' in metadata) ? metadata.isReasoningComplete : currentMessages[currentMessages.length - 1].isReasoningComplete
+          isReasoningComplete: ('isReasoningComplete' in metadata) ? metadata.isReasoningComplete : currentMessages[currentMessages.length - 1].isReasoningComplete,
+          metrics: ('metrics' in metadata) ? metadata.metrics : currentMessages[currentMessages.length - 1].metrics
         } : {})
       }
 
