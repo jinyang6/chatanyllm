@@ -63,33 +63,46 @@ function metadataScore(model) {
   return score
 }
 
-function hasUsefulModelMetadata(models) {
-  return models.some(model => metadataScore(model) >= 2)
+function scoreModels(models) {
+  if (models.length === 0) return 0
+  return models.reduce((sum, model) => sum + metadataScore(model), 0) / models.length
 }
 
-function mergeModels(primaryModels, richerModels) {
-  const primaryById = new Map(
-    primaryModels.map(model => [model.id || model.name, model])
+function mergeModels(baseModels, extraModels) {
+  const extraById = new Map(
+    extraModels.map(model => [model.id || model.name, model])
   )
 
-  return richerModels.map(model => {
-    const base = primaryById.get(model.id || model.name)
-    if (!base) return model
+  const merged = baseModels.map(base => {
+    const key = base.id || base.name
+    const extra = extraById.get(key)
+    if (!extra) return base
+    extraById.delete(key)
 
     return {
       ...base,
-      ...model,
-      description: model.description || base.description,
-      context_window: model.context_window ?? base.context_window,
-      context_length: model.context_length ?? base.context_length,
-      max_context_length: model.max_context_length ?? base.max_context_length,
-      contextLength: model.contextLength ?? base.contextLength,
-      context_size: model.context_size ?? base.context_size,
-      input_modalities: model.input_modalities ?? base.input_modalities,
-      output_modalities: model.output_modalities ?? base.output_modalities,
-      architecture: model.architecture || base.architecture
+      ...extra,
+      description: extra.description || base.description,
+      context_window: extra.context_window ?? base.context_window,
+      context_length: extra.context_length ?? base.context_length,
+      max_context_length: extra.max_context_length ?? base.max_context_length,
+      contextLength: extra.contextLength ?? base.contextLength,
+      context_size: extra.context_size ?? base.context_size,
+      input_modalities: extra.input_modalities ?? base.input_modalities,
+      output_modalities: extra.output_modalities ?? base.output_modalities,
+      architecture: extra.architecture
+        ? { ...(base.architecture || {}), ...extra.architecture }
+        : base.architecture,
+      capabilities: extra.capabilities
+        ? { ...(base.capabilities || {}), ...extra.capabilities }
+        : base.capabilities,
+      limits: extra.limits
+        ? { ...(base.limits || {}), ...extra.limits }
+        : base.limits
     }
   })
+
+  return [...merged, ...extraById.values()]
 }
 
 function normalizeModels(models) {
@@ -182,12 +195,19 @@ async function requestJson(url, headers, timeoutMs) {
   }
 }
 
+function abortError() {
+  return Object.assign(
+    new Error('Request timeout. Please check your connection.'),
+    { name: 'AbortError' }
+  )
+}
+
 /**
  * Fetch models from custom provider.
  *
- * Starts with the provider's configured /models endpoint. If that response has
- * no useful metadata, tries a small set of generic catalog paths on the same
- * origin (e.g. a richer public model catalog).
+ * Queries the configured /models endpoint and a generic set of richer catalog
+ * paths in parallel, then merges all successful results. This keeps perceived
+ * latency at roughly the slowest single request instead of summing timeouts.
  */
 export async function fetchCustomProviderModels(providerConfig, apiKey) {
   const headers = {
@@ -199,70 +219,75 @@ export async function fetchCustomProviderModels(providerConfig, apiKey) {
   }
 
   const urls = buildModelUrls(providerConfig)
-  let primaryModels = null
-  let fallbackModels = null
-  let lastError = null
+  const settled = await Promise.allSettled(
+    urls.map((url, index) => requestJson(
+      url,
+      headers,
+      index === 0 ? REQUEST_TIMEOUT : FALLBACK_TIMEOUT
+    ))
+  )
 
-  for (let index = 0; index < urls.length; index++) {
-    const isPrimary = index === 0
+  const results = settled.map((outcome, index) => ({
+    outcome,
+    isPrimary: index === 0
+  }))
 
-    try {
-      const result = await requestJson(
-        urls[index],
-        headers,
-        isPrimary ? REQUEST_TIMEOUT : FALLBACK_TIMEOUT
-      )
-
-      if (!result.ok) {
-        if (isPrimary && [401, 403, 429].includes(result.status)) {
-          const message = result.status === 429
-            ? 'Rate limited. Please try again later.'
-            : 'Invalid API key for custom provider.'
-          throw Object.assign(new Error(message), { status: result.status })
-        }
-
-        lastError = Object.assign(
-          new Error(`Failed to fetch models: ${result.statusText}`),
-          { status: result.status }
-        )
-        continue
-      }
-
-      // Try to normalize the response (data array, models array, or raw array)
-      const models = result.data?.data || result.data?.models || result.data
-
-      if (!Array.isArray(models)) {
-        lastError = new Error('Unexpected API response format')
-        continue
-      }
-
-      if (isPrimary) primaryModels = models
-
-      if (hasUsefulModelMetadata(models)) {
-        if (primaryModels && !isPrimary) {
-          return normalizeModels(mergeModels(primaryModels, models))
-        }
-        return normalizeModels(models)
-      }
-
-      if (!fallbackModels) fallbackModels = models
-    } catch (error) {
-      if (error.name === 'AbortError') {
-        if (isPrimary) {
-          throw Object.assign(
-            new Error('Request timeout. Please check your connection.'),
-            { name: 'AbortError' }
-          )
-        }
-        lastError = error
-        continue
-      }
-
-      if (isPrimary && error.status) throw error
-      lastError = error
-    }
+  // Invalid keys and rate limits on the actual provider endpoint are fatal,
+  // even if a public catalog endpoint happened to answer.
+  const primary = results[0].outcome
+  if (primary.status === 'fulfilled' && !primary.value.ok &&
+    [401, 403, 429].includes(primary.value.status)) {
+    const message = primary.value.status === 429
+      ? 'Rate limited. Please try again later.'
+      : 'Invalid API key for custom provider.'
+    throw Object.assign(new Error(message), { status: primary.value.status })
   }
 
-  if (fallbackModels) return normalizeModels(fallbackModels)
-  throw lastError || new Error('Failed to fetch models')
+  const lists = []
+  let lastError = null
+
+  for (const { outcome } of results) {
+    if (outcome.status === 'rejected') {
+      lastError = outcome.reason
+      continue
+    }
+
+    if (!outcome.value.ok) {
+      lastError = Object.assign(
+        new Error(`Failed to fetch models: ${outcome.value.statusText}`),
+        { status: outcome.value.status }
+      )
+      continue
+    }
+
+    // Accept data arrays, models arrays, or raw arrays.
+    const models = outcome.value.data?.data ||
+      outcome.value.data?.models ||
+      outcome.value.data
+
+    if (!Array.isArray(models)) {
+      lastError = new Error('Unexpected API response format')
+      continue
+    }
+
+    lists.push({ models, score: scoreModels(models) })
+  }
+
+  if (lists.length === 0) {
+    if (primary.status === 'rejected' && primary.reason?.name === 'AbortError') {
+      throw abortError()
+    }
+    throw lastError || new Error('Failed to fetch models')
+  }
+
+  // Merge from least rich to richest. Provider data wins only when it scores
+  // higher; otherwise richer catalog fields fill the gaps.
+  lists.sort((a, b) => a.score - b.score)
+
+  let models = lists[0].models
+  for (let index = 1; index < lists.length; index++) {
+    models = mergeModels(models, lists[index].models)
+  }
+
+  return normalizeModels(models)
 }
